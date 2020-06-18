@@ -3,11 +3,12 @@
 """Example Python node to publish on a specific topic."""
 
 # Import required Python code.
+
 import rospy
 from std_msgs.msg import String
 
 
-class NodeExample(object):
+class Core(object):
     """Node example class."""
 
     def __init__(self):
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     rospy.init_node("core")
     # Go to class functions that do all the heavy lifting.
     try:
-        NodeExample()
+        Core()
     except rospy.ROSInterruptException:
         pass
     # Allow ROS to go to all callbacks.
