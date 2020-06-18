@@ -1,0 +1,8 @@
+<!-- ROS launch file -->
+<launch>
+    <node pkg="ros_watchdog" type="core.py" name="core">
+        <param name="message" value="I am Python"/>
+        <param name="rate" value="2"/>
+        <remap from="~example" to="~chatter"/>
+    </node>
+</launch>
