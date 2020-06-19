@@ -21,13 +21,16 @@ class RepairAction(Enum):
 
 
 class TopicObserver(object):
-    def __init__(self, topic_name, rate, action_level, window_size=10):
+    def __init__(self, topic_name, rate=1, action_level=0, timeout=0.0, sensor_name='', window_size=10):
         self.name = topic_name
         self.rate = rate
         self.action = RepairAction(action_level)
+        self.sensor_name = sensor_name
         self.times = []
         self.msg_t0 = -1
         self.msg_tn = 0
+        self.time_init = rospy.get_rostime().to_sec()
+        self.timeout = timeout
         self.window_size = window_size
 
         # TODO subsrcibe to the topic and create a statistic
@@ -64,18 +67,37 @@ class TopicObserver(object):
     def get_hz(self):
         n = len(self.times)
         # rate = (n - 1) / (rospy.get_time() - self.msg_t0)
-        mean = sum(self.times) / n
-        rate = 1. / mean if mean > 0. else 0
+        mean = sum(self.times) / n if n > 0 else 0
+        rate = 1. / mean if mean > 0.0 else 0
 
         # std dev
-        std_dev = math.sqrt(sum((x - mean) ** 2 for x in self.times) / n)
+        std_dev = math.sqrt(sum((x - mean) ** 2 for x in self.times) / n) if n > 0 else 0
 
         # min and max
-        max_delta = max(self.times)
-        min_delta = min(self.times)
+        max_delta = max(self.times) if n > 0 else 0
+        min_delta = min(self.times) if n > 0 else 0
+
+        return rate, mean, std_dev, max_delta, min_delta
+
+    def is_violated(self):
+
+        curr = rospy.get_rostime().to_sec()
+
+        # check if this topic is in specified dead time.
+        if self.time_init + self.timeout > curr:
+            print('still within initial timeout...')
+            return False
+
+        if self.msg_t0 < 0:
+            print('no message received yet...')
+
+        [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
+        if rate < self.rate:
+            return True
+        return False
 
 
-class SystemObserver(object):
+class TopicsObserver(object):
     """Node example class."""
 
     def __init__(self, config_filename):
@@ -95,6 +117,19 @@ class SystemObserver(object):
             if key != 'DEFAULT':
                 print(key)
 
+                # read configuration:
+                self.topic_observers[key] = TopicObserver(topic_name=key,
+                                                          rate=float(section.get('rate', 1.0)),
+                                                          action_level=int(section.get('action_level', 0)),
+                                                          timeout=float(section.get('timeout', 0.0)),
+                                                          sensor_name=str(section.get('sensor_name', '')))
+
+    def check_topics(self):
+
+        for key, val in self.topic_observers.items():
+            if val.is_violated():
+                print('found violated topic: ' + str(key))
+
 
 
 if __name__ == '__main__':
@@ -102,9 +137,11 @@ if __name__ == '__main__':
     rospy.init_node("SystemObserver")
     # Go to class functions that do all the heavy lifting.
     try:
-        obs = SystemObserver('topics.ini')
+        obs = TopicsObserver('topics.ini')
 
         obs.start()
+
+        obs.check_topics()
 
     except rospy.ROSInterruptException:
         pass
