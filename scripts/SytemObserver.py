@@ -21,11 +21,14 @@ class RepairAction(Enum):
 
 
 class TopicObserver(object):
-    def __init__(self, topic_name, rate=1, action_level=0, timeout=0.0, sensor_name='', window_size=10):
+    def __init__(self, topic_name, rate=1,
+                 action_level=0, timeout=0.0,
+                 sensor_name='', node_name='', window_size=10):
         self.name = topic_name
         self.rate = rate
-        self.action = RepairAction(action_level)
+        self.action = action_level
         self.sensor_name = sensor_name
+        self.node_name = node_name
         self.times = []
         self.msg_t0 = -1
         self.msg_tn = 0
@@ -36,6 +39,11 @@ class TopicObserver(object):
         # TODO subsrcibe to the topic and create a statistic
         pass
 
+    def reset(self):
+        self.times = []
+        self.msg_t0 = -1
+        self.msg_tn = 0
+        self.time_init = rospy.get_rostime().to_sec()
 
     def get_times(self):
         return self.times
@@ -122,13 +130,15 @@ class TopicsObserver(object):
                                                           rate=float(section.get('rate', 1.0)),
                                                           action_level=int(section.get('action_level', 0)),
                                                           timeout=float(section.get('timeout', 0.0)),
-                                                          sensor_name=str(section.get('sensor_name', '')))
+                                                          sensor_name=str(section.get('sensor_name', '')),
+                                                          node_name=str(section.get('node_name', '')))
 
     def check_topics(self):
-
         for key, val in self.topic_observers.items():
             if val.is_violated():
                 print('found violated topic: ' + str(key))
+                return [key, val]
+        return [None, None]
 
 
 
