@@ -9,12 +9,11 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs)
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
-  scripts/core.py
+  scripts/Core.py
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
 )
 install(FILES
   README
   launch/default.launch
-  config/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
 )
