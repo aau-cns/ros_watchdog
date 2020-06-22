@@ -3,15 +3,15 @@
 """Example Python node to publish on a specific topic."""
 
 # Import required Python code.
-
-import rosgraph
 import rospy
-from std_msgs.msg import String
+
 from autonomy_msgs.msg import SystemStatus
 from enum import Enum
-import configparser
+
 
 from scripts.TopicsObserver import TopicsObserver
+from scripts.Sensors import Sensors
+
 
 class WatchdogActions(Enum):    # RosWatchdog.status
     NONE = 0                    # -> OK
@@ -21,40 +21,6 @@ class WatchdogActions(Enum):    # RosWatchdog.status
     RESTART_SENSOR = 4          # -> HOLD
 
 
-
-class Sensor(object):
-    def __init__(self, name, restart_script=''):
-        pass
-        self.name = name
-        self.restart_script = restart_script
-
-    def restart(self):
-        print('restart sensor ' + str(self.name))
-        print(' -- running: ' + str(self.restart_script))
-
-
-class Sensors(object):
-    def __init__(self, sensors_cfg_file):
-        self.sensors = {}
-        config = configparser.ConfigParser()
-        config.sections()
-        config.read(sensors_cfg_file)
-        self.items = config.items()
-        for key, section in self.items:
-            if key != 'DEFAULT':
-                print(key)
-                # read configuration:
-                self.sensors[key] = Sensor(name=key,
-                                           restart_script=str(section.get('restart_script', '')))
-
-    def restart(self):
-        for key, val in self.sensors.items():
-            val.restart()
-
-    def exists(self, key):
-        if key in self.sensors:
-            return True
-        return False
 
 class RosWatchdog(object):
     """Node example class."""
@@ -107,6 +73,12 @@ class RosWatchdog(object):
                 elif action == WatchdogActions.RESTART_ROSNODE:
                     rospy.logwarn("WARNING: restarting node of [" + str(name) + "] " + str(topic.node_name))
                     self.set_status(SystemStatus.HOLD, "restarting node of [" + str(name) + "] ")
+                    # TODO: implement restarting node
+                    #
+                    #
+                    #
+                    #
+
                     pass
                 elif action == WatchdogActions.RESTART_SENSOR:
                     rospy.logwarn("WARNING: restarting sensor of [" + str(name) + "] " + str(topic.sensor_name))
