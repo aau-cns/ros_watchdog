@@ -10,15 +10,6 @@ import yaml
 import rosgraph
 import rospy
 import math
-from enum import Enum
-
-
-class RepairAction(Enum):
-    RESTART= 1
-    WARNING = 2
-    ERROR = 3
-    NONE = 4
-
 
 class TopicObserver(object):
     def __init__(self, topic_name, rate=1,
@@ -144,7 +135,7 @@ class TopicsObserver(object):
 
 if __name__ == '__main__':
 
-    rospy.init_node("SystemObserver")
+    rospy.init_node("TopicsObserver")
     # Go to class functions that do all the heavy lifting.
     try:
         obs = TopicsObserver('topics.ini')

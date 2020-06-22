@@ -7,10 +7,11 @@
 import rosgraph
 import rospy
 from std_msgs.msg import String
+from autonomy_msgs.msg import SystemStatus
 from enum import Enum
 import configparser
 
-from scripts.SytemObserver import TopicsObserver
+from scripts.TopicsObserver import TopicsObserver
 
 class WatchdogActions(Enum):    # RosWatchdog.status
     NONE = 0                    # -> OK
@@ -68,20 +69,23 @@ class RosWatchdog(object):
         self.topic_observer = TopicsObserver(self.topics_cfg_file)
         self.sensors = Sensors(self.sensors_cfg_file)
 
-        self.status = "OK"
-        self.pub_status = rospy.Publisher("status", String, queue_size=10)
-
+        self.status = SystemStatus.ABORT
+        self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
+        self.set_status(SystemStatus.HOLD)
+        self.do_check_topics = False
 
 
     def start(self):
         self.topic_observer.start()
-        # Create a timer to go to a callback at a specified interval.
-        rate = 1
-        rospy.Timer(rospy.Duration(1.0 / self.topic_check_rate), self.topic_check_cb)
+        self.do_check_topics = True
 
-    def topic_check_cb(self, _event):
+    def stop(self):
+        self.do_check_topics = False
+
+
+    def check_topics(self):
         """Call at a specified interval to publish message."""
-        rospy.loginfo('topic_check_cb')
+        rospy.loginfo('check_topics')
 
 
         violation_detected = False
@@ -98,11 +102,11 @@ class RosWatchdog(object):
                     pass
                 elif action == WatchdogActions.ERROR:
                     rospy.logerr("ERROR: topic [" + str(name) + "] check failed! ")
-                    self.set_status("LAND")
+                    self.set_status(SystemStatus.ABORT, "topic check failed")
                     pass
                 elif action == WatchdogActions.RESTART_ROSNODE:
                     rospy.logwarn("WARNING: restarting node of [" + str(name) + "] " + str(topic.node_name))
-                    self.set_status("HOLD")
+                    self.set_status(SystemStatus.HOLD, "restarting node of [" + str(name) + "] ")
                     pass
                 elif action == WatchdogActions.RESTART_SENSOR:
                     rospy.logwarn("WARNING: restarting sensor of [" + str(name) + "] " + str(topic.sensor_name))
@@ -111,10 +115,24 @@ class RosWatchdog(object):
                         print('  - sensor found!')
                         sensor = self.sensors.sensors[topic.sensor_name]
                         print('  - run:' + str(sensor.restart_script))
+
+                        success = True
+                        # TODO: implement synchronous script execution
+                        #
+                        #
+                        #
+                        #
+
+                        if success:
+                            self.set_status(SystemStatus.HOLD, "restarting sensor")
+                        else:
+                            print('  - ERROR: was not able to restart sensor!')
+                            self.set_status(SystemStatus.ABORT, "sensor not restartable")
+
                     else:
                         print('  - ERROR: sensor not found!')
+                        self.set_status(SystemStatus.ABORT, "sensor not found -> invalid configuration")
 
-                    self.set_status("HOLD")
                     pass
                 else:
                     rospy.logerr('unknown action: ' + str(action))
@@ -122,19 +140,31 @@ class RosWatchdog(object):
                 topic.reset()
 
         if not violation_detected:
-            self.set_status("OK")
+            self.set_status(SystemStatus.OK)
 
-    def set_status(self, status_):
+    def set_status(self, status_, info_ = ""):
         if  status_ is not self.status:
-            rospy.loginfo('status changed')
+            rospy.loginfo('status changed: ' + str(status_))
             self.status = status_
-            self.pub_status.publish(self.status)
+            msg = SystemStatus()
+            msg.stamp = rospy.get_rostime().now()
+            msg.status = status_
+            msg.source = "RosWatchdog"
+            msg.info = info_
+
+            self.pub_status.publish(msg)
 
     def run(self):
-        rate = rospy.Rate(0.1)  # 10hz
+        rate = rospy.Rate(self.topic_check_rate)
+        cnt = 0
         while not rospy.is_shutdown():
-            hello_str = "heart beat %s" % rospy.get_time()
-            rospy.loginfo(hello_str)
+            if self.do_check_topics:
+                self.check_topics()
+            elif cnt % 100 == 0:
+                hello_str = "heart beat %s" % rospy.get_time()
+                rospy.loginfo(hello_str)
+
+            cnt = cnt + 1
             rate.sleep()
 
 if __name__ == '__main__':
