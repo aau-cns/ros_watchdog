@@ -4,6 +4,7 @@
 
 # Import required Python code.
 import rospy
+import os
 
 from autonomy_msgs.msg import SystemStatus
 from enum import Enum
@@ -30,6 +31,7 @@ class RosWatchdog(object):
         self.topics_cfg_file = rospy.get_param("topics_cfg_file", "topics.ini")
         self.sensors_cfg_file = rospy.get_param("sensors_cfg_file", "sensors.ini")
         self.topic_check_rate = rospy.get_param("topic_check_rate", 1.0)
+        self.bVerbose = rospy.get_param("bVerbose",True)
 
         # topic observers
         self.topic_observer = TopicsObserver(self.topics_cfg_file)
@@ -39,6 +41,19 @@ class RosWatchdog(object):
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
         self.set_status(SystemStatus.HOLD)
         self.do_check_topics = False
+
+    def is_node_running(self, node_name):
+        nodes = os.popen("rosnode list").readlines()
+        for i in range(len(nodes)):
+            nodes[i] = nodes[i].replace("\n", "")
+
+        if self.bVerbose:
+            rospy.loginfo("existing nodes: " + str(nodes))
+
+        if any(x == node_name for x in nodes):
+            return True
+        else:
+            return False
 
 
     def start(self):
@@ -65,21 +80,26 @@ class RosWatchdog(object):
                     pass
                 elif action == WatchdogActions.WARNING:
                     rospy.logwarn("WARNING: topic [" + str(name) + "] check failed! ")
-                    pass
+
                 elif action == WatchdogActions.ERROR:
                     rospy.logerr("ERROR: topic [" + str(name) + "] check failed! ")
                     self.set_status(SystemStatus.ABORT, "topic check failed")
-                    pass
+
                 elif action == WatchdogActions.RESTART_ROSNODE:
                     rospy.logwarn("WARNING: restarting node of [" + str(name) + "] " + str(topic.node_name))
-                    self.set_status(SystemStatus.HOLD, "restarting node of [" + str(name) + "] ")
-                    # TODO: implement restarting node
-                    #
-                    #
-                    #
-                    #
 
-                    pass
+
+                    if self.is_node_running(topic.node_name):
+                        self.set_status(SystemStatus.HOLD, "restarting node of [" + str(name) + "] ")
+                        if self.bVerbose:
+                            rospy.loginfo("-- rosnode kill "+ topic.node_name)
+
+                        os.system("rosnode kill "+ topic.node_name)
+                    else:
+                        rospy.logwarn("-- node ["+ topic.node_name + "] is not running!")
+                        self.set_status(SystemStatus.ABORT, "node is not running")
+
+
                 elif action == WatchdogActions.RESTART_SENSOR:
                     rospy.logwarn("WARNING: restarting sensor of [" + str(name) + "] " + str(topic.sensor_name))
 
@@ -105,7 +125,6 @@ class RosWatchdog(object):
                         print('  - ERROR: sensor not found!')
                         self.set_status(SystemStatus.ABORT, "sensor not found -> invalid configuration")
 
-                    pass
                 else:
                     rospy.logerr('unknown action: ' + str(action))
 

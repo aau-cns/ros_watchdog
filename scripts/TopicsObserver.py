@@ -20,20 +20,21 @@ class TopicObserver(object):
         self.action = action_level
         self.sensor_name = sensor_name
         self.node_name = node_name
-        self.times = []
-        self.msg_t0 = -1
-        self.msg_tn = 0
-        self.time_init = rospy.get_rostime().to_sec()
+
         self.timeout = timeout
         self.window_size = window_size
 
         # TODO subsrcibe to the topic and create a statistic
+        topic = rosgraph.names.script_resolve_name('rostopic', self.name)
+        print("*  TopicObserver.reset(): found: " + str(topic) + " for: [" + self.name + "]")
+        self.sub = rospy.Subscriber(topic, rospy.AnyMsg, self.callback_hz)
+        self.reset()
         pass
 
     def reset(self):
         self.times = []
         self.msg_t0 = -1
-        self.msg_tn = 0
+        self.msg_tn = -1
         self.time_init = rospy.get_rostime().to_sec()
 
     def get_times(self):
@@ -42,18 +43,14 @@ class TopicObserver(object):
     def set_times(self, value):
         self.times = value
 
-    def callback_hz(self, m, topic=None):
+    def callback_hz(self, data):
         """
         ros sub callback
-        :param m: Message instance
-        :param topic: Topic name
         """
-        curr_rostime = rospy.get_rostime()
-        curr = curr_rostime.to_sec()
+        curr = rospy.get_rostime().to_sec()
 
-        self.msg_tn = 0
 
-        if self.msg_t0 < 0 or self.msg_t0 > curr:
+        if self.msg_tn < 0 or self.msg_t0 < 0:
             self.msg_t0 = curr
             self.msg_tn = curr
             self.times = []
@@ -84,16 +81,21 @@ class TopicObserver(object):
 
         # check if this topic is in specified dead time.
         if self.time_init + self.timeout > curr:
-            print('still within initial timeout...')
+            print("*  [" + self.name + "] still within initial timeout...")
             return False
 
         if self.msg_t0 < 0:
-            print('no message received yet...')
+            print("*  [" + self.name + "] no message received yet...")
 
         [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
         if rate < self.rate:
+            print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached:" + str(rate))
+            print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
             return True
-        return False
+        else:
+            print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached:" + str(rate))
+            print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+            return False
 
 
 class TopicsObserver(object):
