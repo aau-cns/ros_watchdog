@@ -10,14 +10,15 @@ from autonomy_msgs.msg import SystemStatus
 from enum import Enum
 
 
-from scripts.TopicsObserver import TopicsObserver
-from scripts.Sensors import Sensors
-
+from TopicsObserver import TopicsObserver
+from Sensors import Sensors
+from ros_watchdog.srv import status as StatusSrv
+from ros_watchdog.srv import statusResponse as StatusSrvResp
 
 class WatchdogActions(Enum):    # RosWatchdog.status
     NONE = 0                    # -> OK
     WARNING = 1                 # -> OK
-    ERROR = 2                   # -> LAND
+    ERROR = 2                   # -> ABORT
     RESTART_ROSNODE= 3          # -> HOLD
     RESTART_SENSOR = 4          # -> HOLD
 
@@ -28,10 +29,10 @@ class RosWatchdog(object):
 
     def __init__(self):
         # ROS parameters
-        self.topics_cfg_file = rospy.get_param("topics_cfg_file", "topics.ini")
-        self.sensors_cfg_file = rospy.get_param("sensors_cfg_file", "sensors.ini")
-        self.topic_check_rate = rospy.get_param("topic_check_rate", 1.0)
-        self.bVerbose = rospy.get_param("bVerbose",True)
+        self.topics_cfg_file = rospy.get_param("~topics_cfg_file", "topics.ini")
+        self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
+        self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
+        self.bVerbose = rospy.get_param("~bVerbose",True)
 
         # topic observers
         self.topic_observer = TopicsObserver(self.topics_cfg_file)
@@ -41,6 +42,9 @@ class RosWatchdog(object):
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
         self.set_status(SystemStatus.HOLD)
         self.do_check_topics = False
+
+        # Declare our service object
+        self.custom_srv = rospy.Service('/status_service', StatusSrv, self.handle_status_service)
 
     def is_node_running(self, node_name):
         nodes = os.popen("rosnode list").readlines()
@@ -63,15 +67,24 @@ class RosWatchdog(object):
     def stop(self):
         self.do_check_topics = False
 
+    def handle_status_service(self, req):
+        """Create a handle for the custom service."""
+        if self.bVerbose:
+            rospy.loginfo("Received status request from " + str(req.source))
+
+        resp = StatusSrvResp()
+        resp.status = self.get_status_msg()
+        return resp
 
     def check_topics(self):
         """Call at a specified interval to publish message."""
-        rospy.loginfo('check_topics')
+        if self.bVerbose:
+            rospy.loginfo('check_topics')
 
 
         violation_detected = False
         for name, topic in self.topic_observer.topic_observers.items():
-            if topic.is_violated():
+            if topic.is_violated(verbose=self.bVerbose):
                 violation_detected = True
 
                 action = WatchdogActions(topic.action)
@@ -104,9 +117,11 @@ class RosWatchdog(object):
                     rospy.logwarn("WARNING: restarting sensor of [" + str(name) + "] " + str(topic.sensor_name))
 
                     if self.sensors.exists(topic.sensor_name):
-                        print('  - sensor found!')
+                        if self.bVerbose:
+                            print('  - sensor found!')
                         sensor = self.sensors.sensors[topic.sensor_name]
-                        print('  - run:' + str(sensor.restart_script))
+                        if self.bVerbose:
+                            print('  - run:' + str(sensor.restart_script))
 
                         success = True
                         # TODO: implement synchronous script execution
@@ -118,11 +133,13 @@ class RosWatchdog(object):
                         if success:
                             self.set_status(SystemStatus.HOLD, "restarting sensor")
                         else:
-                            print('  - ERROR: was not able to restart sensor!')
+                            if self.bVerbose:
+                                print('  - ERROR: was not able to restart sensor!')
                             self.set_status(SystemStatus.ABORT, "sensor not restartable")
 
                     else:
-                        print('  - ERROR: sensor not found!')
+                        if self.bVerbose:
+                            print('  - ERROR: sensor not found!')
                         self.set_status(SystemStatus.ABORT, "sensor not found -> invalid configuration")
 
                 else:
@@ -137,13 +154,18 @@ class RosWatchdog(object):
         if  status_ is not self.status:
             rospy.loginfo('status changed: ' + str(status_))
             self.status = status_
-            msg = SystemStatus()
-            msg.stamp = rospy.get_rostime().now()
-            msg.status = status_
-            msg.source = "RosWatchdog"
+
+            msg = self.get_status_msg()
             msg.info = info_
 
             self.pub_status.publish(msg)
+
+    def get_status_msg(self):
+        msg = SystemStatus()
+        msg.stamp = rospy.get_rostime().now()
+        msg.status = self.status
+        msg.source = "ros_watchdog"
+        return msg
 
     def run(self):
         rate = rospy.Rate(self.topic_check_rate)
@@ -158,8 +180,9 @@ class RosWatchdog(object):
             cnt = cnt + 1
             rate.sleep()
 
-if __name__ == '__main__':
 
+
+if __name__ == '__main__':
     rospy.init_node("ros_watchdog")
     # Go to class functions that do all the heavy lifting.
     try:

@@ -13,11 +13,11 @@ import math
 
 class TopicObserver(object):
     def __init__(self, topic_name, rate=1,
-                 action_level=0, timeout=0.0,
+                 watchdog_action=0, timeout=0.0,
                  sensor_name='', node_name='', window_size=10):
         self.name = topic_name
         self.rate = rate
-        self.action = action_level
+        self.action = watchdog_action
         self.sensor_name = sensor_name
         self.node_name = node_name
 
@@ -75,26 +75,30 @@ class TopicObserver(object):
 
         return rate, mean, std_dev, max_delta, min_delta
 
-    def is_violated(self):
+    def is_violated(self, verbose=True):
 
         curr = rospy.get_rostime().to_sec()
 
         # check if this topic is in specified dead time.
         if self.time_init + self.timeout > curr:
-            print("*  [" + self.name + "] still within initial timeout...")
+            if verbose:
+                print("*  [" + self.name + "] still within initial timeout...")
             return False
 
         if self.msg_t0 < 0:
-            print("*  [" + self.name + "] no message received yet...")
+            if verbose:
+                print("*  [" + self.name + "] no message received yet...")
 
         [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
         if rate < self.rate:
-            print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached:" + str(rate))
-            print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+            if verbose:
+                print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
+                print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
             return True
         else:
-            print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached:" + str(rate))
-            print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+            if verbose:
+                print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached: " + str(rate))
+                print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
             return False
 
 
@@ -106,6 +110,11 @@ class TopicsObserver(object):
         config.sections()
         config.read(config_filename)
         self.items = config.items()
+
+        # the first element is default section!
+        if len(self.items) < 2:
+            print("ERROR: no topic objects in " + str(config_filename))
+
         self.start_time = rospy.get_time()
         self.topic_observers = {}
 
@@ -121,10 +130,11 @@ class TopicsObserver(object):
                 # read configuration:
                 self.topic_observers[key] = TopicObserver(topic_name=key,
                                                           rate=float(section.get('rate', 1.0)),
-                                                          action_level=int(section.get('action_level', 0)),
+                                                          watchdog_action=int(section.get('watchdog_action', 0)),
                                                           timeout=float(section.get('timeout', 0.0)),
                                                           sensor_name=str(section.get('sensor_name', '')),
                                                           node_name=str(section.get('node_name', '')))
+
 
     def check_topics(self):
         for key, val in self.topic_observers.items():

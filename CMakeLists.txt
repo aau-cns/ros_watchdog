@@ -3,14 +3,24 @@ project(ros_watchdog)
 
 find_package(catkin REQUIRED COMPONENTS message_generation std_msgs autonomy_msgs)
 
+add_service_files(
+  FILES
+  status.srv
+#   Service2.srv
+)
 
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  autonomy_msgs
+)
 
-catkin_package(CATKIN_DEPENDS message_runtime std_msgs autonomy_msgs)
+catkin_package(CATKIN_DEPENDS autonomy_msgs message_generation std_msgs )
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
   scripts/Sensors.py
-  scripts/TopicsObserver.py  
+  scripts/TopicsObserver.py
   scripts/ros_watchdog.py
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
 )
