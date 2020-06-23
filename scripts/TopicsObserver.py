@@ -4,38 +4,56 @@
 
 # Import required Python code.
 
+import os
+import time
 import ast
 import configparser
 import yaml
 import rosgraph
 import rospy
 import math
+from enum import Enum
+
+class TopicStatus(Enum):    # RosWatchdog.status
+    OK = 0                    # -> OK
+    RESTARTING = 1            # -> OK
+    ERROR = 2                 # -> ABORT
+    UNOBSERVED= 3
 
 class TopicObserver(object):
     def __init__(self, topic_name, rate=1,
                  watchdog_action=0, timeout=0.0,
-                 sensor_name='', node_name='', window_size=10):
+                 sensor_name='', node_name='', window_size=10, verbose=True):
         self.name = topic_name
-        self.rate = rate
-        self.action = watchdog_action
+        self.rate = float(rate)
+        self.action = int(watchdog_action)
         self.sensor_name = sensor_name
         self.node_name = node_name
+        self.timeout = float(timeout)
+        self.window_size = int(window_size)
+        self.bVerbose = verbose
+        self.time_operational = -1
 
-        self.timeout = timeout
-        self.window_size = window_size
 
-        # TODO subsrcibe to the topic and create a statistic
-        topic = rosgraph.names.script_resolve_name('rostopic', self.name)
-        print("*  TopicObserver.reset(): found: " + str(topic) + " for: [" + self.name + "]")
-        self.sub = rospy.Subscriber(topic, rospy.AnyMsg, self.callback_hz)
-        self.reset()
+        self.topic = rosgraph.names.script_resolve_name('rostopic', self.name)
+        self.status = TopicStatus.UNOBSERVED
         pass
 
-    def reset(self):
+
+    def stop_observation(self):
+        self.status = TopicStatus.UNOBSERVED
+        self.time_operational = -1
+        self.sub.unregister()
+
+    # important for high level logic to define when observation should start!
+    def start_observation(self):
         self.times = []
         self.msg_t0 = -1
         self.msg_tn = -1
-        self.time_init = rospy.get_rostime().to_sec()
+        self.time_operational = rospy.get_rostime().to_sec() + self.timeout
+        self.status = TopicStatus.RESTARTING
+        self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz)
+
 
     def get_times(self):
         return self.times
@@ -48,7 +66,6 @@ class TopicObserver(object):
         ros sub callback
         """
         curr = rospy.get_rostime().to_sec()
-
 
         if self.msg_tn < 0 or self.msg_t0 < 0:
             self.msg_t0 = curr
@@ -75,73 +92,94 @@ class TopicObserver(object):
 
         return rate, mean, std_dev, max_delta, min_delta
 
-    def is_violated(self, verbose=True):
+    def get_status(self):
+        if self.status == TopicStatus.UNOBSERVED:
+            return TopicStatus.UNOBSERVED
 
-        curr = rospy.get_rostime().to_sec()
+        t_curr = rospy.get_rostime().to_sec()
 
         # check if this topic is in specified dead time.
-        if self.time_init + self.timeout > curr:
-            if verbose:
+        if t_curr < (self.time_operational):
+            if self.bVerbose:
                 print("*  [" + self.name + "] still within initial timeout...")
-            return False
+            return TopicStatus.RESTARTING
 
         if self.msg_t0 < 0:
-            if verbose:
+            if self.bVerbose:
                 print("*  [" + self.name + "] no message received yet...")
+            return TopicStatus.ERROR
 
         [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
         if rate < self.rate:
-            if verbose:
+            if self.bVerbose:
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
-            return True
+            return TopicStatus.ERROR
         else:
-            if verbose:
+            if self.bVerbose:
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
-            return False
+            return TopicStatus.OK
 
+
+    def get_action(self):
+        return self.action
 
 class TopicsObserver(object):
     """Node example class."""
 
-    def __init__(self, config_filename):
+    def __init__(self, topics_cfg_file, verbose=True):
+        assert (os.path.exists(topics_cfg_file))
+        self.bVerbose = verbose
+
+        self.observers = {}
         config = configparser.ConfigParser()
         config.sections()
-        config.read(config_filename)
+        config.read(topics_cfg_file)
         self.items = config.items()
 
         # the first element is default section!
         if len(self.items) < 2:
-            print("ERROR: no topic objects in " + str(config_filename))
+            rospy.logerr("ERROR: no topic objects in " + str(topics_cfg_file))
 
-        self.start_time = rospy.get_time()
-        self.topic_observers = {}
-
-        pass
-
-    def start(self):
-        self.start_time = rospy.get_time()
-        print(self.start_time)
         for key, section in self.items:
             if key != 'DEFAULT':
-                print(key)
-
+                if self.bVerbose:
+                    print(key)
                 # read configuration:
-                self.topic_observers[key] = TopicObserver(topic_name=key,
-                                                          rate=float(section.get('rate', 1.0)),
-                                                          watchdog_action=int(section.get('watchdog_action', 0)),
-                                                          timeout=float(section.get('timeout', 0.0)),
-                                                          sensor_name=str(section.get('sensor_name', '')),
-                                                          node_name=str(section.get('node_name', '')))
+                self.observers[key] = TopicObserver(
+                                        topic_name=key,
+                                        rate=float(section.get('rate', 1.0)),
+                                        watchdog_action=int(section.get('watchdog_action', 0)),
+                                        timeout=float(section.get('timeout', 0.0)),
+                                        sensor_name=str(section.get('sensor_name', '')),
+                                        node_name=str(section.get('node_name', '')),
+                                        verbose=verbose)
 
+    def exists(self, name):
+        return self.observers.has_key(name)
 
-    def check_topics(self):
-        for key, val in self.topic_observers.items():
-            if val.is_violated():
-                print('found violated topic: ' + str(key))
-                return [key, val]
-        return [None, None]
+    def start_observation(self):
+        for key, val in self.observers.items():
+            val.start_observation()
+
+    def stop_observation(self):
+        for key, val in self.observers.items():
+            val.stop_observation()
+
+    def get_status(self):
+        status = {}
+        for key, val in self.observers.items():
+            status[key] = val.get_status()
+
+        return status
+
+    def get_action(self, name):
+        if self.exists(name):
+            return self.observers[name].get_action()
+        else:
+            return 0
+
 
 
 
@@ -152,9 +190,12 @@ if __name__ == '__main__':
     try:
         obs = TopicsObserver('topics.ini')
 
-        obs.start()
+        obs.start_observation()
+        while not rospy.is_shutdown():
+            status = obs.get_status()
+            print(str(status))
 
-        obs.check_topics()
+            time.sleep(1)
 
     except rospy.ROSInterruptException:
         pass

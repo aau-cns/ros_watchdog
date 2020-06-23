@@ -11,7 +11,7 @@ from enum import Enum
 
 
 from TopicsObserver import TopicsObserver
-from Sensors import Sensors
+from SensorsObserver import SensorsObserver
 from ros_watchdog.srv import status as StatusSrv
 from ros_watchdog.srv import statusResponse as StatusSrvResp
 
@@ -36,7 +36,7 @@ class RosWatchdog(object):
 
         # topic observers
         self.topic_observer = TopicsObserver(self.topics_cfg_file)
-        self.sensors = Sensors(self.sensors_cfg_file)
+        self.sensors = SensorsObserver(self.sensors_cfg_file)
 
         self.status = SystemStatus.ABORT
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
