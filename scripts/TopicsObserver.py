@@ -20,6 +20,16 @@ class TopicStatus(Enum):    # RosWatchdog.status
     ERROR = 2                 # -> ABORT
     UNOBSERVED= 3
 
+
+class TopicActions(Enum):    # RosWatchdog.status
+    NONE = 0                    # -> OK
+    WARNING = 1                 # -> OK
+    ERROR = 2                   # -> ABORT
+    RESTART_ROSNODE= 3          # -> HOLD
+    RESTART_SENSOR = 4          # -> HOLD
+    RESTART_BOTH = 5
+
+
 class TopicObserver(object):
     def __init__(self, topic_name, rate=1,
                  watchdog_action=0, timeout=0.0,
@@ -31,19 +41,29 @@ class TopicObserver(object):
         self.node_name = node_name
         self.timeout = float(timeout)
         self.window_size = int(window_size)
+        if self.timeout == 0:
+            self.timeout = self.window_size/self.rate if self.rate > 0.0 else 0.0
+
         self.bVerbose = verbose
+
+        self.times = []
+        self.msg_t0 = -1
+        self.msg_tn = -1
         self.time_operational = -1
 
 
         self.topic = rosgraph.names.script_resolve_name('rostopic', self.name)
         self.status = TopicStatus.UNOBSERVED
+        self.sub = None
         pass
 
 
     def stop_observation(self):
         self.status = TopicStatus.UNOBSERVED
         self.time_operational = -1
-        self.sub.unregister()
+        if self.sub:
+            self.sub.unregister()
+            self.sub = None
 
     # important for high level logic to define when observation should start!
     def start_observation(self):
@@ -174,12 +194,22 @@ class TopicsObserver(object):
 
         return status
 
+    def print_status(self):
+        for name, status in self.get_status().items():
+            print("- [" + str(name) + "]:" + str(status.name))
+
     def get_action(self, name):
         if self.exists(name):
             return self.observers[name].get_action()
         else:
             return 0
 
+    def has_node(self, node_name):
+        topic_names = []
+        for key, val in self.observers.items():
+            if node_name == val.node_name:
+                topic_names.append(key)
+        return topic_names
 
 
 
@@ -188,7 +218,7 @@ if __name__ == '__main__':
     rospy.init_node("TopicsObserver")
     # Go to class functions that do all the heavy lifting.
     try:
-        obs = TopicsObserver('topics.ini')
+        obs = TopicsObserver('topics.ini', verbose=False)
 
         obs.start_observation()
         while not rospy.is_shutdown():

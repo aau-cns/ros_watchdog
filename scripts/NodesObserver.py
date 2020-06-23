@@ -94,18 +94,21 @@ class NodeObserver(object):
         if self.t_running < 0 or self.t0 < 0:
             return NodeStatus.UNOBSERVED
 
+        if self.num_restarts > self.max_restart_attempts:
+            return NodeStatus.ERROR
+
         if not self.is_running():
             if not self.restart_node():
                 return NodeStatus.ERROR
 
-        if self.num_restarts >  self.max_restart_attempts:
-            return NodeStatus.ERROR
 
         t_curr = rospy.get_rostime().now().to_sec()
         if self.t_running > t_curr:
             return NodeStatus.RESTARTING  # all related TopicObserver need to restart their observation! as long as the node is restarting
 
         return NodeStatus.OK
+
+
 
 class NodesObserver(object):
     def __init__(self, nodes_cfg_file, verbose = True):
@@ -151,6 +154,9 @@ class NodesObserver(object):
 
         return status
 
+    def print_status(self):
+        for name, status in self.get_status().items():
+            print("- [" + str(name) + "]:" + str(status.name))
 
 if __name__ == '__main__':
 
