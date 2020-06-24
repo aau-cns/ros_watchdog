@@ -10,7 +10,7 @@ import configparser
 
 class NodeStatus(Enum):    # RosWatchdog.status
     OK = 0                    # -> OK
-    RESTARTING = 1            # -> OK
+    STARTING = 1            # -> OK
     ERROR = 2                 # -> ABORT
     UNOBSERVED= 3
 
@@ -104,7 +104,7 @@ class NodeObserver(object):
 
         t_curr = rospy.get_rostime().now().to_sec()
         if self.t_running > t_curr:
-            return NodeStatus.RESTARTING  # all related TopicObserver need to restart their observation! as long as the node is restarting
+            return NodeStatus.STARTING  # all related TopicObserver need to restart their observation! as long as the node is restarting
 
         return NodeStatus.OK
 

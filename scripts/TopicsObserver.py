@@ -16,7 +16,7 @@ from enum import Enum
 
 class TopicStatus(Enum):    # RosWatchdog.status
     OK = 0                    # -> OK
-    RESTARTING = 1            # -> OK
+    STARTING = 1            # -> OK
     ERROR = 2                 # -> ABORT
     UNOBSERVED= 3
 
@@ -70,7 +70,7 @@ class TopicObserver(object):
         self.msg_t0 = -1
         self.msg_tn = -1
         self.time_operational = rospy.get_rostime().to_sec() + self.timeout
-        self.status = TopicStatus.RESTARTING
+        self.status = TopicStatus.STARTING
         self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz)
 
 
@@ -121,7 +121,7 @@ class TopicObserver(object):
         if t_curr < (self.time_operational):
             if self.bVerbose:
                 print("*  [" + self.name + "] still within initial timeout...")
-            return TopicStatus.RESTARTING
+            return TopicStatus.STARTING
 
         if self.msg_t0 < 0:
             if self.bVerbose:

@@ -31,7 +31,7 @@ class Observer(object):
 
         nodes_status = self.nodes_obs.get_status()
         for node_name, node_status in nodes_status.items():
-            if node_status == NodeStatus.RESTARTING or node_status == NodeStatus.UNOBSERVED:
+            if node_status == NodeStatus.STARTING or node_status == NodeStatus.UNOBSERVED:
                 topics_names = self.topics_obs.has_node(node_name)
                 for topic_name in topics_names:
                     if self.topics_obs.exists(topic_name):
@@ -155,8 +155,6 @@ if __name__ == '__main__':
 
             rospy.loginfo("Sleep...")
             time.sleep(1)
-
-
     except rospy.ROSInterruptException:
         pass
     # Allow ROS to go to all callbacks.

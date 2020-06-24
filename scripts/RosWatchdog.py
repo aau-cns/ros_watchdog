@@ -91,11 +91,11 @@ class RosWatchdog(object):
             if self.state == "STARTED":
                 nodes_status, topics_status, sensors_status = self.observer.process()
 
-                if any(val == NodeStatus.ERROR for key,val in nodes_status.items()) or any(val == SensorStatus.ERROR for key, val in sensors_status.items()) or any(val == TopicStatus.ERROR for key, val in topics_status.items()):
+                if any(val == NodeStatus.ERROR for key,val in nodes_status.items()) or any(val == SensorStatus.ERROR for key, val in sensors_status.items()):
                     self.set_status(SystemStatus.ABORT)
                     if self.bVerbose:
                         rospy.logerr("- SystemStatus.ABORT")
-                elif any(val == NodeStatus.RESTARTING for key,val in nodes_status.items())  or any(val == TopicStatus.RESTARTING for key, val in topics_status.items()):
+                elif any(val == NodeStatus.STARTING for key, val in nodes_status.items())  or any(val == TopicStatus.STARTING for key, val in topics_status.items()):
                     self.set_status(SystemStatus.HOLD)
                     if self.bVerbose:
                         rospy.logwarn("- SystemStatus.HOLD")
