@@ -80,3 +80,7 @@ class SensorsObserver(object):
             status[key] = val.get_status()
 
         return status
+
+    def print_status(self):
+        for name, status in self.get_status().items():
+            print("- sensor: [" + str(name) + "]:" + str(status.name))

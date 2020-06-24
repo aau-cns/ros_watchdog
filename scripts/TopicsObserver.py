@@ -27,7 +27,6 @@ class TopicActions(Enum):    # RosWatchdog.status
     ERROR = 2                   # -> ABORT
     RESTART_ROSNODE= 3          # -> HOLD
     RESTART_SENSOR = 4          # -> HOLD
-    RESTART_BOTH = 5
 
 
 class TopicObserver(object):
@@ -196,7 +195,7 @@ class TopicsObserver(object):
 
     def print_status(self):
         for name, status in self.get_status().items():
-            print("- [" + str(name) + "]:" + str(status.name))
+            print("- topic:  [" + str(name) + "]:" + str(status.name))
 
     def get_action(self, name):
         if self.exists(name):

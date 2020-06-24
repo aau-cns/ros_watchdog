@@ -156,7 +156,7 @@ class NodesObserver(object):
 
     def print_status(self):
         for name, status in self.get_status().items():
-            print("- [" + str(name) + "]:" + str(status.name))
+            print("- node:   [" + str(name) + "]:" + str(status.name))
 
 if __name__ == '__main__':
 

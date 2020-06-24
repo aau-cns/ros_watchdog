@@ -25,7 +25,7 @@ class Observer(object):
 
 
     def check_nodes(self):
-
+        # modifies topic states
         if self.bVerbose:
             self.nodes_obs.print_status()
 
@@ -58,7 +58,7 @@ class Observer(object):
         return nodes_status
 
     def check_topics(self):
-
+        # modifies node states
         if self.bVerbose:
             self.topics_obs.print_status()
 
@@ -92,22 +92,35 @@ class Observer(object):
                     else:
                         print("*  - topic action -> restart node FAILURE")
                 elif action == TopicActions.RESTART_SENSOR:
+                    if self.sensors_obs.exists(sensor_name):
+                        if not self.sensors_obs.observers[sensor_name].restart():
+                            print("*    sensor " + str(sensor_name) + " restarting failed!")
+
+                        if self.nodes_obs.observers[node_name].restart_node():
+                            print("*  - topic action -> restart node SUCCESS")
+                        else:
+                            print("*  - topic action -> restart node FAILURE")
+                    else:
+                        print("*    sensor " + str(sensor_name) + " does not exist!")
                     print("*  - topic action -> restart sensor...")
-                    pass
-                elif action == TopicActions.RESTART_BOTH:
-                    print("*  - topic action -> restart sensor + node...")
-                    pass
                 else:
                     print("*  - unknown action")
                     assert(False)
-
-
 
             elif topic_status == TopicStatus.OK:
                 pass
 
 
         return topics_status
+
+    def check_sensors(self):
+        # modifies node states
+        if self.bVerbose:
+            self.sensors_obs.print_status()
+
+        return self.sensors_obs.get_status()
+
+
 
     def start_observation(self):
         self.nodes_obs.start_observation()
@@ -124,8 +137,10 @@ class Observer(object):
 
 
     def process(self):
-        self.check_nodes()
-        self.check_topics()
+        nodes_status = self.check_nodes()
+        topics_status = self.check_topics()
+        sensors_status = self.check_sensors()
+        return nodes_status, topics_status, sensors_status
 
 if __name__ == '__main__':
 
