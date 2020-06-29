@@ -19,9 +19,11 @@ catkin_package(CATKIN_DEPENDS autonomy_msgs message_generation std_msgs )
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
-  scripts/Sensors.py
+  scripts/Observer.py
+  scripts/NodesObserver.py
   scripts/TopicsObserver.py
-  scripts/ros_watchdog.py
+  scripts/Observer.py
+  scripts/RosWatchdog.py
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
 )
 install(FILES
