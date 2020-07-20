@@ -8,6 +8,7 @@
     <node pkg="ros_watchdog" type="RosWatchdog.py" name="watchdog" output="screen">
         <param name="topics_cfg_file" value="$(find ros_watchdog)/scripts/topics.ini"/>
         <param name="sensors_cfg_file" value="$(find ros_watchdog)/scripts/sensors.ini"/>
+        <param name="nodes_cfg_file" value="$(find ros_watchdog)/scripts/nodes.ini"/>
         <param name="topic_check_rate" value="1.0"/>
         <param name="bVerbose" value="True"/>
 
