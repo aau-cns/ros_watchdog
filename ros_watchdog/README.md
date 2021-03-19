@@ -56,4 +56,3 @@ restart_attempts=2
 Each section is defined by the sensor name (Important must match with Topic  INI-file).
 The `restart_script` entry specifies the script to be run, if the watchdog_action `RESTART_SENSOR` is active.
 The `restart_attempts` specifies how many time the sensor can be restarted in a row.
-
