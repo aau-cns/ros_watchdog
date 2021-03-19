@@ -1,16 +1,20 @@
 <!-- ROS launch file -->
 <launch>
-    <arg name="node_name"       default="watchdog" />
+    <arg name="node_name"         default="watchdog" />
 
-    <arg name="status_o"        default="$(arg node_name)/status" />
-    <arg name="status_service_o"        default="$(arg node_name)/status" />
+    <arg name="status_o"          default="$(arg node_name)/status" />
+    <arg name="status_service_o"  default="$(arg node_name)/status" />
+
+    <arg name="do_verbose"        default="True" />
+    <arg name="use_startup_to"    default="True" />
 
     <node pkg="ros_watchdog" type="RosWatchdog.py" name="watchdog" output="screen">
         <param name="topics_cfg_file" value="$(find ros_watchdog)/scripts/topics.ini"/>
         <param name="sensors_cfg_file" value="$(find ros_watchdog)/scripts/sensors.ini"/>
         <param name="nodes_cfg_file" value="$(find ros_watchdog)/scripts/nodes.ini"/>
         <param name="topic_check_rate" value="1.0"/>
-        <param name="bVerbose" value="True"/>
+        <param name="bVerbose" value="$(arg do_verbose)"/>
+        <param name="bUseStartupTO" value="$(arg use_startup_to)"/>
 
         <remap from="/status" to="$(arg status_o)"/>
         <remap from="/status_service" to="$(arg status_service_o)"/>
