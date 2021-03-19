@@ -16,11 +16,18 @@ from SensorsObserver import SensorsObserver, SensorStatus
 from NodesObserver import NodesObserver, NodeStatus
 
 class Observer(object):
-    def __init__(self, topics_cfg_file, nodes_cfg_file, sensors_cfg_file, verbose=True):
-        self.topics_obs = TopicsObserver(topics_cfg_file=topics_cfg_file, verbose=False)
-        self.nodes_obs = NodesObserver(nodes_cfg_file=nodes_cfg_file, verbose=False)
+    def __init__(self,
+                 topics_cfg_file,
+                 nodes_cfg_file,
+                 sensors_cfg_file,
+                 verbose=True,
+                 use_startup_TO=True,
+                 ):
+        self.topics_obs = TopicsObserver(topics_cfg_file=topics_cfg_file, verbose=verbose, use_startup_TO=use_startup_TO)
+        self.nodes_obs = NodesObserver(nodes_cfg_file=nodes_cfg_file, verbose=verbose, use_startup_TO=use_startup_TO)
         self.sensors_obs = SensorsObserver(sensors_cfg_file=sensors_cfg_file)
         self.bVerbose = verbose
+        self.bUseStartupTO = use_startup_TO
         pass
 
 

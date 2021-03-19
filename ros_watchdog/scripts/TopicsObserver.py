@@ -14,25 +14,33 @@ import rospy
 import math
 from enum import Enum
 
+
 class TopicStatus(Enum):    # RosWatchdog.status
     OK = 0                    # -> OK
     STARTING = 1            # -> OK
     ERROR = 2                 # -> ABORT
-    UNOBSERVED= 3
+    UNOBSERVED = 3
 
 
 class TopicActions(Enum):    # RosWatchdog.status
     NONE = 0                    # -> OK
     WARNING = 1                 # -> OK
     ERROR = 2                   # -> ABORT
-    RESTART_ROSNODE= 3          # -> HOLD
+    RESTART_ROSNODE = 3         # -> HOLD
     RESTART_SENSOR = 4          # -> HOLD
 
 
 class TopicObserver(object):
-    def __init__(self, topic_name, rate=1,
-                 watchdog_action=0, timeout=0.0,
-                 sensor_name='', node_name='', window_size=10, verbose=True):
+    def __init__(self,
+                 topic_name,
+                 rate=1,
+                 watchdog_action=0,
+                 timeout=0.0,
+                 sensor_name='',
+                 node_name='',
+                 window_size=10,
+                 verbose=True,
+                 ):
         self.name = topic_name
         self.rate = float(rate)
         self.action = int(watchdog_action)
@@ -147,7 +155,7 @@ class TopicObserver(object):
 class TopicsObserver(object):
     """Node example class."""
 
-    def __init__(self, topics_cfg_file, verbose=True):
+    def __init__(self, topics_cfg_file, verbose=True, use_startup_to=True):
         assert (os.path.exists(topics_cfg_file))
         self.bVerbose = verbose
 
@@ -165,12 +173,16 @@ class TopicsObserver(object):
             if key != 'DEFAULT':
                 if self.bVerbose:
                     print(key)
+                    pass
+                # check startup timeout
+                timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
+
                 # read configuration:
                 self.observers[key] = TopicObserver(
                                         topic_name=key,
                                         rate=float(section.get('rate', 1.0)),
                                         watchdog_action=int(section.get('watchdog_action', 0)),
-                                        timeout=float(section.get('timeout', 0.0)),
+                                        timeout=timeout,
                                         sensor_name=str(section.get('sensor_name', '')),
                                         node_name=str(section.get('node_name', '')),
                                         verbose=verbose)

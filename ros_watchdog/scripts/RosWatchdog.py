@@ -29,13 +29,15 @@ class RosWatchdog(object):
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
         self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
-        self.bVerbose = rospy.get_param("~bVerbose",True)
+        self.bVerbose = rospy.get_param("~bVerbose", True)
+        self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
         # topic observers
         self.observer = Observer(topics_cfg_file=self.topics_cfg_file,
                                  nodes_cfg_file=self.nodes_cfg_file,
                                  sensors_cfg_file=self.sensors_cfg_file,
-                                 verbose=self.bVerbose)
+                                 verbose=self.bVerbose,
+                                 use_startup_to=self.bUseStartupTO,)
 
         self.status = SystemStatus.ABORT
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
@@ -68,7 +70,7 @@ class RosWatchdog(object):
     def handle_startup_service(self, req):
 
         if self.bVerbose:
-            rospy.loginfo("Received startup request")
+            rospy.loginfo("Received startup request from " + str(req.source))
             pass
 
         # start watchdog
@@ -87,7 +89,7 @@ class RosWatchdog(object):
     def check_topics(self):
         pass
 
-    def set_status(self, status_, info_ = ""):
+    def set_status(self, status_, info_=""):
         if status_ is not self.status:
             rospy.loginfo('status changed: ' + str(status_))
             self.status = status_
