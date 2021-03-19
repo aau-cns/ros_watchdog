@@ -1,6 +1,6 @@
-Header  header
-string  source
-uint8   status
+std_msgs/Header header
+string          source
+uint8           status
 # OLD:
 #uint8 OK         = 0   # The goal has yet to be processed by the action server
 #uint8 HOLD       = 1   # The goal is currently being processed by the action server
