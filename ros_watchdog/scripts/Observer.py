@@ -21,13 +21,13 @@ class Observer(object):
                  nodes_cfg_file,
                  sensors_cfg_file,
                  verbose=True,
-                 use_startup_TO=True,
+                 use_startup_to=True,
                  ):
-        self.topics_obs = TopicsObserver(topics_cfg_file=topics_cfg_file, verbose=verbose, use_startup_TO=use_startup_TO)
-        self.nodes_obs = NodesObserver(nodes_cfg_file=nodes_cfg_file, verbose=verbose, use_startup_TO=use_startup_TO)
+        self.topics_obs = TopicsObserver(topics_cfg_file=topics_cfg_file, verbose=False, use_startup_to=use_startup_to)
+        self.nodes_obs = NodesObserver(nodes_cfg_file=nodes_cfg_file, verbose=False, use_startup_to=use_startup_to)
         self.sensors_obs = SensorsObserver(sensors_cfg_file=sensors_cfg_file)
         self.bVerbose = verbose
-        self.bUseStartupTO = use_startup_TO
+        self.bUseStartupTO = use_startup_to
         pass
 
 

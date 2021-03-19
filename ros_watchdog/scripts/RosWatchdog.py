@@ -18,6 +18,8 @@ from ros_watchdog.srv import status as StatusSrv
 from ros_watchdog.srv import statusResponse as StatusSrvResp
 from ros_watchdog.srv import wdstart as WdstartSrv
 from ros_watchdog.srv import wdstartResponse as WdstartSrvResp
+from ros_watchdog.srv import wderror as WdErrorSrv
+from ros_watchdog.srv import wderrorRequest as WdErrorSrvRequ
 
 
 class RosWatchdog(object):
@@ -47,6 +49,10 @@ class RosWatchdog(object):
         # Declare our service object
         self.custom_srv = rospy.Service('/status_service', StatusSrv, self.handle_status_service)
         self.startup_srv = rospy.Service('/start_service', WdstartSrv, self.handle_startup_service)
+
+        # Connect to autonomy service
+        rospy.wait_for_service('/autonomy_action')
+        self.autonomy_action_req = rospy.ServiceProxy('/autonomy_action', WdErrorSrv, persistent=True)
         pass
 
     def start(self):
@@ -94,7 +100,7 @@ class RosWatchdog(object):
             rospy.loginfo('status changed: ' + str(status_))
             self.status = status_
 
-            self.do_pub_status(info_=info_)
+            # call service to publish change in status
             pass
         pass
 
@@ -104,9 +110,18 @@ class RosWatchdog(object):
         self.pub_status.publish(msg)
         pass
 
+    def do_service_status(self):
+        msg = WdErrorSrvRequ
+        msg.status = self.get_status_msg()
+        try:
+            resp = self.autonomy_action_req(msg)
+        except rospy.ServiceException as e:
+            rospy.logwarn("Service call failed: %s" % e)
+        pass
+
     def get_status_msg(self):
         msg = SystemStatus()
-        msg.stamp = rospy.get_rostime().now()
+        msg.header.stamp = rospy.get_rostime().now()
         msg.status = self.status
         msg.source = "ros_watchdog"
         return msg

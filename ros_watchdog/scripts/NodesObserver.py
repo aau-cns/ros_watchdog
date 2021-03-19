@@ -111,7 +111,7 @@ class NodeObserver(object):
 
 
 class NodesObserver(object):
-    def __init__(self, nodes_cfg_file, verbose = True):
+    def __init__(self, nodes_cfg_file, verbose=True, use_startup_to=True):
         assert(os.path.exists(nodes_cfg_file))
         self.bVerbose = verbose
 

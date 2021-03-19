@@ -7,6 +7,7 @@ add_service_files(
   FILES
   status.srv
   wdstart.srv
+  wderror.srv
 #   Service2.srv
 )
 
