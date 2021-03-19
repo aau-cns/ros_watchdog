@@ -41,6 +41,10 @@ class RosWatchdog(object):
                                  verbose=self.bVerbose,
                                  use_startup_to=self.bUseStartupTO,)
 
+        # Declare Action Server on Autonomy side
+        self.autonomy_action_req = None
+
+        # Set status variables
         self.status = SystemStatus.ABORT
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
         self.set_status(SystemStatus.HOLD)
@@ -50,14 +54,18 @@ class RosWatchdog(object):
         self.custom_srv = rospy.Service('/status_service', StatusSrv, self.handle_status_service)
         self.startup_srv = rospy.Service('/start_service', WdstartSrv, self.handle_startup_service)
 
-        # Connect to autonomy service
-        rospy.wait_for_service('/autonomy_action')
-        self.autonomy_action_req = rospy.ServiceProxy('/autonomy_action', WdErrorSrv, persistent=True)
         pass
 
     def start(self):
         self.observer.start_observation()
         self.state = "STARTED"
+
+        # Connect to autonomy service
+        if self.autonomy_action_req is None:
+            rospy.wait_for_service('/autonomy_action')
+            self.autonomy_action_req = rospy.ServiceProxy('/autonomy_action', WdErrorSrv, persistent=True)
+            pass
+        pass
 
     def stop(self):
         self.observer.stop_observation()
@@ -101,6 +109,7 @@ class RosWatchdog(object):
             self.status = status_
 
             # call service to publish change in status
+            self.do_service_status()
             pass
         pass
 
@@ -111,12 +120,26 @@ class RosWatchdog(object):
         pass
 
     def do_service_status(self):
-        msg = WdErrorSrvRequ
-        msg.status = self.get_status_msg()
-        try:
-            resp = self.autonomy_action_req(msg)
-        except rospy.ServiceException as e:
-            rospy.logwarn("Service call failed: %s" % e)
+        if self.bVerbose:
+            rospy.loginfo("Calling autonomy service ...")
+            pass
+
+        if self.autonomy_action_req is not None:
+            try:
+                msg = WdErrorSrvRequ()
+                msg.status = self.get_status_msg()
+                resp = self.autonomy_action_req(msg)
+
+                if self.bVerbose:
+                    rospy.loginfo("... got response %d" % resp.received)
+                    pass
+
+            except rospy.ServiceException as e:
+                rospy.logwarn("Service call failed: %s" % e)
+                pass
+            pass
+        else:
+            rospy.logerr("Do not have any connection to autonomy service")
         pass
 
     def get_status_msg(self):

@@ -1,13 +1,14 @@
 <!-- ROS launch file -->
 <launch>
-    <arg name="node_name"         default="watchdog" />
+    <arg name="node_name"           default="watchdog" />
 
-    <arg name="status_o"          default="$(arg node_name)/status" />
-    <arg name="status_service_o"  default="$(arg node_name)/status" />
-    <arg name="start_service_o"   default="$(arg node_name)/start" />
+    <arg name="status_o"            default="$(arg node_name)/status" />
+    <arg name="status_service_o"    default="$(arg node_name)/status" />
+    <arg name="start_service_o"     default="$(arg node_name)/start" />
+    <arg name="autonomy_service_o"  default="$(arg node_name)/autonomy" />
 
-    <arg name="do_verbose"        default="True" />
-    <arg name="use_startup_to"    default="False" />
+    <arg name="do_verbose"          default="True" />
+    <arg name="use_startup_to"      default="False" />
 
     <node pkg="ros_watchdog" type="RosWatchdog.py" name="watchdog" output="screen">
         <param name="topics_cfg_file"   value="$(find ros_watchdog)/scripts/topics.ini"/>
@@ -20,5 +21,6 @@
         <remap from="/status"           to="$(arg status_o)"/>
         <remap from="/status_service"   to="$(arg status_service_o)"/>
         <remap from="/start_service"    to="$(arg start_service_o)"/>
+        <remap from="/autonomy_action"  to="$(arg autonomy_service_o)"/>
     </node>
 </launch>
