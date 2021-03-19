@@ -1,4 +1,0 @@
-########################################
-### ROSnode config
-bVerbose: true
-strExample_text: "loaded parameter from default_config.yaml"
