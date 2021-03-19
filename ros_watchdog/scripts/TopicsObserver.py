@@ -50,12 +50,10 @@ class TopicObserver(object):
         self.msg_tn = -1
         self.time_operational = -1
 
-
         self.topic = rosgraph.names.script_resolve_name('rostopic', self.name)
         self.status = TopicStatus.UNOBSERVED
         self.sub = None
         pass
-
 
     def stop_observation(self):
         self.status = TopicStatus.UNOBSERVED
@@ -63,6 +61,8 @@ class TopicObserver(object):
         if self.sub:
             self.sub.unregister()
             self.sub = None
+            pass
+        pass
 
     # important for high level logic to define when observation should start!
     def start_observation(self):
@@ -72,7 +72,7 @@ class TopicObserver(object):
         self.time_operational = rospy.get_rostime().to_sec() + self.timeout
         self.status = TopicStatus.STARTING
         self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz)
-
+        pass
 
     def get_times(self):
         return self.times

@@ -1,0 +1,5 @@
+string                      source
+float64                     startup_time
+---
+bool                        successful
+autonomy_msgs/SystemStatus  status

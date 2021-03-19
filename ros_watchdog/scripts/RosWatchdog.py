@@ -16,9 +16,8 @@ from TopicsObserver import TopicStatus
 from SensorsObserver import SensorStatus
 from ros_watchdog.srv import status as StatusSrv
 from ros_watchdog.srv import statusResponse as StatusSrvResp
-
-
-
+from ros_watchdog.srv import wdstart as WdstartSrv
+from ros_watchdog.srv import wdstartResponse as WdstartSrvResp
 
 
 class RosWatchdog(object):
@@ -42,10 +41,11 @@ class RosWatchdog(object):
         self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
         self.set_status(SystemStatus.HOLD)
         self.state = "STOPPED"
+
         # Declare our service object
         self.custom_srv = rospy.Service('/status_service', StatusSrv, self.handle_status_service)
-
-
+        self.startup_srv = rospy.Service('/start_service', WdstartSrv, self.handle_startup_service)
+        pass
 
     def start(self):
         self.observer.start_observation()
@@ -59,23 +59,48 @@ class RosWatchdog(object):
         """Create a handle for the custom service."""
         if self.bVerbose:
             rospy.loginfo("Received status request from " + str(req.source))
+            pass
 
         resp = StatusSrvResp()
         resp.status = self.get_status_msg()
+        return resp
+
+    def handle_startup_service(self, req):
+
+        if self.bVerbose:
+            rospy.loginfo("Received startup request")
+            pass
+
+        # start watchdog
+        self.start()
+
+        # wait required time for system checks
+        rospy.loginfo("Collecting startup data for %f seconds" % req.startup_time)
+        rospy.sleep(req.startup_time)
+
+        # return response
+        resp = WdstartSrvResp()
+        resp.status = self.get_status_msg()
+        resp.successful = True if resp.status.status < 2 else False
         return resp
 
     def check_topics(self):
         pass
 
     def set_status(self, status_, info_ = ""):
-        if  status_ is not self.status:
+        if status_ is not self.status:
             rospy.loginfo('status changed: ' + str(status_))
             self.status = status_
 
-            msg = self.get_status_msg()
-            msg.info = info_
+            self.do_pub_status(info_=info_)
+            pass
+        pass
 
-            self.pub_status.publish(msg)
+    def do_pub_status(self, info_=""):
+        msg = self.get_status_msg()
+        msg.info = info_
+        self.pub_status.publish(msg)
+        pass
 
     def get_status_msg(self):
         msg = SystemStatus()
@@ -91,7 +116,7 @@ class RosWatchdog(object):
             if self.state == "STARTED":
                 nodes_status, topics_status, sensors_status = self.observer.process()
 
-                if any(val == NodeStatus.ERROR for key,val in nodes_status.items()) or any(val == SensorStatus.ERROR for key, val in sensors_status.items()):
+                if any(val == NodeStatus.ERROR for key, val in nodes_status.items()) or any(val == SensorStatus.ERROR for key, val in sensors_status.items()):
                     self.set_status(SystemStatus.ABORT)
                     if self.bVerbose:
                         rospy.logerr("- SystemStatus.ABORT")
@@ -103,6 +128,11 @@ class RosWatchdog(object):
                     self.set_status(SystemStatus.OK)
                     if self.bVerbose:
                         rospy.loginfo("- SystemStatus.OK")
+                        pass
+                    pass
+
+                # publish status
+                self.do_pub_status("heartbeat")
 
             elif cnt % 100 == 0:
                 hello_str = "heart beat %s" % rospy.get_time()
@@ -110,7 +140,9 @@ class RosWatchdog(object):
 
             cnt = cnt + 1
             rate.sleep()
-
+            pass
+        pass
+    pass
 
 
 if __name__ == '__main__':
@@ -118,7 +150,7 @@ if __name__ == '__main__':
     # Go to class functions that do all the heavy lifting.
     try:
         obj = RosWatchdog()
-        obj.start()
+        # obj.start()
         obj.run()
     except rospy.ROSInterruptException:
         pass

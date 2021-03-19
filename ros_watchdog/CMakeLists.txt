@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS message_generation std_msgs autonomy_msg
 add_service_files(
   FILES
   status.srv
+  wdstart.srv
 #   Service2.srv
 )
 
