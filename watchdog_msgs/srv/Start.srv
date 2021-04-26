@@ -1,0 +1,6 @@
+Header                      header
+float64                     startup_time
+---
+Header                      header
+bool                        successful
+watchdog_msgs/SystemStatus  status

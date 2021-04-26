@@ -1,0 +1,18 @@
+# goal definition
+Header                              header
+float64                             timeout
+uint8                               id
+# action possibilities
+uint8                               action
+uint8   NONE                        = 0
+uint8   RESTART_NODE                = 1
+uint8   RESTART_DRIVER              = 2
+---
+# result definition
+Header                              header
+uint8                               id
+bool                                successful
+watchdog_msgs/SystemStatus          status
+---
+# feedback definition
+watchdog_msgs/SystemStatusStamped   status

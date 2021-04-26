@@ -1,2 +1,2 @@
 Header                      header
-autonomy_msgs/SystemStatus  status
+watchdog_msgs/SystemStatus  status
