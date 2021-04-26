@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>watchdog_msgs</name>
-  <version>0.1.0</version>
-  <description>
-    ROS messages for high-level/abstract  system/mission/autonomy status.
-  </description>
+  <name>aaucns_watchdog</name>
+  <version>1.0.0</version>
+  <description>Metapackage for the ros_watchdog</description>
 
   <maintainer email="roland.jung@aau.at">Roland Jung</maintainer>
   <maintainer email="martin.scheiber@aau.at">Roland Jung</maintainer>
@@ -16,11 +14,11 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>actionlib_msgs</depend>
+  <exec_depend>watchdog_msgs</exec_depend>
+  <exec_depend>ros_watchdog</exec_depend>
+  <exec_depend>watchdog_bringup</exec_depend>
 
-  <build_depend>message_generation</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-
-  <exec_depend>message_runtime</exec_depend>
+  <export>
+    <metapackage/>
+  </export>
 </package>

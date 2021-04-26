@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>watchdog_bringup</name>
+  <version>1.0.0</version>
+  <description>Watchdog launch and configfile collection</description>
+
+  <maintainer email="martin.scheiber@aau.at">Roland Jung</maintainer>
+
+  <license>BSD-2-Clause-License with no commercial use allowed. No license in patents is granted.</license>
+
+  <author email="martin.scheiber@aau.at">Roland Jung</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+</package>

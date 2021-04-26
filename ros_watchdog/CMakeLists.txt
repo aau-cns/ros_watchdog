@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ros_watchdog)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs autonomy_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs watchdog_msgs)
 
 add_service_files(
   FILES
@@ -14,10 +14,10 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs
-  autonomy_msgs
+  watchdog_msgs
 )
 
-catkin_package(CATKIN_DEPENDS autonomy_msgs message_generation std_msgs )
+catkin_package(CATKIN_DEPENDS watchdog_msgs std_msgs )
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
