@@ -5,8 +5,10 @@
 # Import required Python code.
 import rospy
 import os
+import typing as typ
 
-from autonomy_msgs.msg import SystemStatus
+from watchdog_msgs.msg import SystemStatus
+from watchdog_msgs.msg import SystemStatusStamped
 from enum import Enum
 
 
@@ -21,11 +23,22 @@ from ros_watchdog.srv import wdstartResponse as WdstartSrvResp
 from ros_watchdog.srv import wderror as WdErrorSrv
 from ros_watchdog.srv import wderrorRequest as WdErrorSrvRequ
 
+from watchdog_msgs.srv import Start as StartService
+from watchdog_msgs.srv import StartRequest as StartReq
+from watchdog_msgs.srv import StartResponse as StartRes
+
 
 class RosWatchdog(object):
     """Node example class."""
 
+    class WatchdogStates(Enum):
+        STOPPED = 0
+        INITIALIZED = 1
+        STARTED = 2
+        pass  # class WatchdogStates(Enum)
+
     def __init__(self):
+
         # ROS parameters
         self.topics_cfg_file = rospy.get_param("~topics_cfg_file", "topics.ini")
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
@@ -46,30 +59,57 @@ class RosWatchdog(object):
 
         # Set status variables
         self.status = SystemStatus.ABORT
-        self.pub_status = rospy.Publisher("/status", SystemStatus, queue_size=10)
+        self.pub_status = rospy.Publisher("status", SystemStatusStamped, queue_size=10)
         self.set_status(SystemStatus.HOLD)
-        self.state = "STOPPED"
+
+        # setup state
+        self.state = self.WatchdogStates.STOPPED
 
         # Declare our service object
         self.custom_srv = rospy.Service('/status_service', StatusSrv, self.handle_status_service)
-        self.startup_srv = rospy.Service('/start_service', WdstartSrv, self.handle_startup_service)
+
+        # declare services
+        self.start_srv = rospy.Service('service/start', StartService, self.handle_start_service)
+
+        # declare counters
+        self.__cntStatus = 0      # type: int
 
         pass
 
     def start(self):
-        self.observer.start_observation()
-        self.state = "STARTED"
+        # type: (...) -> None
+        """Starts the watchdog node"""
 
-        # Connect to autonomy service
+        # check current state of watchdog
+        if self.state is not self.WatchdogStates.STOPPED:
+            rospy.logerr("Watchdog already started (or is starting). Doing nothing.")
+            return
+        else:
+            self.state = self.WatchdogStates.INITIALIZED
+            pass
+
+        # start observer
+        self.observer.start_observation()
+
+        # connect to autonomy service
+        # TODO(scm): check if still required
         if self.autonomy_action_req is None:
             rospy.wait_for_service('/autonomy_action')
             self.autonomy_action_req = rospy.ServiceProxy('/autonomy_action', WdErrorSrv, persistent=True)
             pass
-        pass
+
+        # set status to started
+        self.state = self.WatchdogStates.STARTED
+        pass  # def start()
 
     def stop(self):
+        # type: (...) -> None
+        """Stops the watchdog node"""
+
+        # stop observations and set state
         self.observer.stop_observation()
-        self.state = "STOPPED"
+        self.state = self.WatchdogStates.STOPPED
+        pass  # def stop()
 
     def handle_status_service(self, req):
         """Create a handle for the custom service."""
@@ -81,24 +121,30 @@ class RosWatchdog(object):
         resp.status = self.get_status_msg()
         return resp
 
-    def handle_startup_service(self, req):
+    def handle_start_service(self,
+                             req,       # type: StartReq
+                             ):
+        # type: (...) -> StartRes
 
+        # debug
         if self.bVerbose:
-            rospy.loginfo("Received startup request from " + str(req.source))
+            rospy.loginfo("Received startup request from %s" % req.header.frame_id)
             pass
 
         # start watchdog
         self.start()
 
         # wait required time for system checks
-        rospy.loginfo("Collecting startup data for %f seconds" % req.startup_time)
+        rospy.loginfo("collecting startup data for %f seconds" % req.startup_time)
         rospy.sleep(req.startup_time)
 
         # return response
-        resp = WdstartSrvResp()
-        resp.status = self.get_status_msg()
-        resp.successful = True if resp.status.status < 2 else False
-        return resp
+        res = StartRes()
+        res.header.stamp = rospy.get_rostime().now()
+        res.header.frame_id = "ros_watchdog"
+        res.status = self.get_status_msg()
+        res.successful = True if res.status.status < 4 else False
+        return res
 
     def check_topics(self):
         pass
@@ -114,8 +160,13 @@ class RosWatchdog(object):
         pass
 
     def do_pub_status(self, info_=""):
-        msg = self.get_status_msg()
-        msg.info = info_
+        """Publishes the current system status"""
+        # setup msg
+        msg = self.get_status_stamped_msg()
+        msg.header.seq = self.__cntStatus
+        msg.status.info = info_
+
+        # publish msg
         self.pub_status.publish(msg)
         pass
 
@@ -142,25 +193,48 @@ class RosWatchdog(object):
             rospy.logerr("Do not have any connection to autonomy service")
         pass
 
-    def get_status_msg(self):
-        msg = SystemStatus()
+    def get_status_stamped_msg(self):
+        # type: (...) -> SystemStatusStamped
+        """Returns the system status as a stamped ROS message"""
+
+        msg = SystemStatusStamped()
         msg.header.stamp = rospy.get_rostime().now()
+        msg.header.frame_id = "ros_watchdog"
+        msg.status = self.get_status_msg
+        return msg
+
+    def get_status_msg(self):
+        # type: (...) -> SystemStatus
+        """Returns the system status as a ROS message"""
+
+        msg = SystemStatus()
+        msg.id = 0  # global ID = 0
+        msg.name = "global"
         msg.status = self.status
-        msg.source = "ros_watchdog"
         return msg
 
     def run(self):
         rate = rospy.Rate(self.topic_check_rate)
         cnt = 0
+
+        # main thread
         while not rospy.is_shutdown():
-            if self.state == "STARTED":
+            # check if started
+            if self.state == self.WatchdogStates.STARTED:
                 nodes_status, topics_status, sensors_status = self.observer.process()
 
-                if any(val == NodeStatus.ERROR for key, val in nodes_status.items()) or any(val == SensorStatus.ERROR for key, val in sensors_status.items()):
+                # check for errors
+                if any(val == NodeStatus.ERROR for key, val in nodes_status.items()) \
+                        or any(val == SensorStatus.ERROR for key, val in sensors_status.items()):
                     self.set_status(SystemStatus.ABORT)
                     if self.bVerbose:
                         rospy.logerr("- SystemStatus.ABORT")
-                elif any(val == NodeStatus.STARTING for key, val in nodes_status.items())  or any(val == TopicStatus.STARTING for key, val in topics_status.items()):
+                        pass
+                    pass
+
+                # check for starting
+                elif any(val == NodeStatus.STARTING for key, val in nodes_status.items()) \
+                        or any(val == TopicStatus.STARTING for key, val in topics_status.items()):
                     self.set_status(SystemStatus.HOLD)
                     if self.bVerbose:
                         rospy.logwarn("- SystemStatus.HOLD")
@@ -178,6 +252,7 @@ class RosWatchdog(object):
                 hello_str = "heart beat %s" % rospy.get_time()
                 rospy.loginfo(hello_str)
 
+            # sleep remainder of rate
             cnt = cnt + 1
             rate.sleep()
             pass
@@ -196,3 +271,4 @@ if __name__ == '__main__':
         pass
     # Allow ROS to go to all callbacks.
     rospy.spin()
+    pass  # if __name__ == '__main__'
