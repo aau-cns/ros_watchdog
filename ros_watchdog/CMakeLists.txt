@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ros_watchdog)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs watchdog_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs watchdog_msgs rospy)
+
+catkin_python_setup()
 
 add_service_files(
   FILES
@@ -19,17 +21,23 @@ generate_messages(
 
 catkin_package(CATKIN_DEPENDS watchdog_msgs std_msgs )
 
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
+
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
-  scripts/Observer.py
-  scripts/NodesObserver.py
-  scripts/TopicsObserver.py
-  scripts/Observer.py
+#  scripts/AssetObserver.py
+#  scripts/NodesObserver.py
+#  scripts/TopicsObserver.py
+#  scripts/AssetObserver.py
+#  scripts/ObserverHandler.py
   scripts/RosWatchdog.py
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
 install(FILES
   README
   launch/default.launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/scripts
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

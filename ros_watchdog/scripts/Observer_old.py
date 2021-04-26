@@ -13,23 +13,23 @@ from enum import Enum
 
 
 from TopicsObserver import TopicsObserver, TopicStatus, TopicActions
-from SensorsObserver import SensorsObserver, SensorStatus
+from DriversObserver import DriversObserver, DriverStatus
 from NodesObserver import NodesObserver, NodeStatus
 
 
-class Observer(object):
+class SensorsObserver(object):
     def __init__(self,
-                 topics_cfg_file,
-                 nodes_cfg_file,
-                 sensors_cfg_file,
-                 verbose=True,
-                 use_startup_to=True,
+                 topics_cfg_file,       # type: str
+                 nodes_cfg_file,        # type: str
+                 sensors_cfg_file,      # type: str
+                 verbose=True,          # type: bool
+                 use_startup_to=True,   # type: bool
                  ):
 
         # setup observers
         self.topics_obs = TopicsObserver(topics_cfg_file=topics_cfg_file, verbose=False, use_startup_to=use_startup_to)
         self.nodes_obs = NodesObserver(nodes_cfg_file=nodes_cfg_file, verbose=False, use_startup_to=use_startup_to)
-        self.sensors_obs = SensorsObserver(sensors_cfg_file=sensors_cfg_file)
+        self.sensors_obs = DriversObserver(sensors_cfg_file=sensors_cfg_file)
 
         # setup flags
         self.bVerbose = verbose
@@ -37,7 +37,30 @@ class Observer(object):
 
         pass  # def __init__(...)
 
+    def start_observation(self):
+        self.nodes_obs.start_observation()
+        # topic observer will start automatically with node observer
+        # self.topics_obs.start_observation()
+        self.sensors_obs.start_observation()
+        pass  # def start_observations()
+
+    def stop_observation(self):
+        self.nodes_obs.stop_observation()
+        self.topics_obs.stop_observation()
+        self.sensors_obs.stop_observation()
+        pass  # def stop_observations()
+
+    def process(self):
+
+        nodes_status = self.check_nodes()
+        topics_status = self.check_topics()
+        sensors_status = self.check_sensors()
+        return nodes_status, topics_status, sensors_status
+        pass  # def process()
+
     def check_nodes(self):
+        # type: (...) -> (...)
+        """Checks the status of all nodes"""
         # modifies topic states
         if self.bVerbose:
             self.nodes_obs.print_status()
@@ -61,7 +84,7 @@ class Observer(object):
                 pass
 
             # start topic observer, once the node is operational
-            if node_status == NodeStatus.OK:
+            if node_status == NodeStatus.NOMINAL:
                 topics_names = self.topics_obs.has_node(node_name)
                 for topic_name in topics_names:
                     if self.topics_obs.exists(topic_name):
@@ -71,6 +94,9 @@ class Observer(object):
         return nodes_status
 
     def check_topics(self):
+        # type: (...) -> None
+        """Checks the status of all observed topics"""
+
         # modifies node states
         if self.bVerbose:
             self.topics_obs.print_status()
@@ -120,7 +146,7 @@ class Observer(object):
                     print("*  - unknown action")
                     assert(False)
 
-            elif topic_status == TopicStatus.OK:
+            elif topic_status == TopicStatus.NOMINAL:
                 pass
 
 
@@ -134,33 +160,12 @@ class Observer(object):
         return self.sensors_obs.get_status()
 
 
-
-    def start_observation(self):
-        self.nodes_obs.start_observation()
-        # topic observer will start automatically with node observer
-        # self.topics_obs.start_observation()
-        self.sensors_obs.start_observation()
-        pass
-
-    def stop_observation(self):
-        self.nodes_obs.stop_observation()
-        self.topics_obs.stop_observation()
-        self.sensors_obs.stop_observation()
-        pass
-
-
-    def process(self):
-        nodes_status = self.check_nodes()
-        topics_status = self.check_topics()
-        sensors_status = self.check_sensors()
-        return nodes_status, topics_status, sensors_status
-
 if __name__ == '__main__':
 
     rospy.init_node("Observer")
     # Go to class functions that do all the heavy lifting.
     try:
-        obs = Observer('topics.ini', 'nodes.ini', 'sensors.ini', True)
+        obs = SensorsObserver('topics.ini', 'nodes.ini', 'sensors.ini', True)
 
         obs.start_observation()
         while not rospy.is_shutdown():

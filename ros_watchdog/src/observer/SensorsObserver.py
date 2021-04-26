@@ -7,19 +7,33 @@ import os
 from enum import Enum
 from subprocess import call
 
+from observer.Observer import Observer, ObserverStatus, ObserverSeverity
+
 class SensorStatus(Enum):    # RosWatchdog.status
     OK = 0                    # -> OK
     ERROR = 1                 # -> ABORT
 
 
-class Sensor(object):
-    def __init__(self, name, dirname='', restart_script='', restart_attempts=1):
-        pass
-        self.name = name
+class Sensor(Observer):
+
+    def __init__(
+            self,
+            name,
+            observer_id,
+            dirname='',
+            restart_script='',
+            restart_attempts=1,
+            verbose=False
+            ):
+
+        # initialize super
+        super(Sensor, self).__init__(name, observer_id, 0.0, verbose)
+
         self.dirname = dirname
         self.restart_script = restart_script
         self.restart_attempts = restart_attempts
         self.clear_stats()
+        pass
 
 
     def restart(self):
@@ -29,7 +43,7 @@ class Sensor(object):
         file = os.path.join(self.dirname, self.restart_script)
         print(' -- running: ' + str(file))
         rc = call(file, shell=True)
-        if  rc == 0:
+        if rc == 0:
             print('success..')
             return True
         else:
@@ -38,13 +52,13 @@ class Sensor(object):
 
     def get_status(self):
         if self.num_restarts > self.restart_attempts:
-            self.status = SensorStatus.ERROR
+            self.status = ObserverStatus.ERROR
 
         return self.status
 
     def clear_stats(self):
         self.num_restarts = 0
-        self.status = SensorStatus.OK
+        self.status = ObserverStatus.NOMINAL
 
 
 class SensorsObserver(object):
@@ -52,7 +66,10 @@ class SensorsObserver(object):
         assert (os.path.exists(sensors_cfg_file))
         self.bVerbose = verbose
 
-        self.dirname = os.path.dirname(os.path.abspath(sensors_cfg_file));
+        # setup ID counter
+        self.__cnt_id = 1   # always start with 1, 0 --> global
+
+        self.dirname = os.path.dirname(os.path.abspath(sensors_cfg_file))
 
         self.observers = {}
         config = configparser.ConfigParser()
@@ -69,13 +86,19 @@ class SensorsObserver(object):
                 if self.bVerbose:
                     print(key)
                 # read configuration:
-                self.observers[key] = Sensor(name=key,
-                                           dirname=self.dirname,
-                                           restart_script=str(section.get('restart_script', '')),
-                                           restart_attempts=str(section.get('restart_attempts', 1))
-                                           )
+                self.observers[key] = Sensor(
+                    name=key,
+                    observer_id=self.__cnt_id,
+                    dirname=self.dirname,
+                    restart_script=str(section.get('restart_script', '')),
+                    restart_attempts=int(section.get('restart_attempts', '0')),
+                    verbose=verbose
+                )
 
-
+                self.__cnt_id += 1
+                pass
+            pass
+        pass
 
     def exists(self, node_name):
         return self.observers.has_key(node_name)
@@ -92,6 +115,9 @@ class SensorsObserver(object):
             status[key] = val.get_status()
 
         return status
+
+    def get_observers(self):
+        return self.observers
 
     def print_status(self):
         for name, status in self.get_status().items():
