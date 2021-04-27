@@ -33,6 +33,7 @@ catkin_install_python(PROGRAMS
 #  scripts/AssetObserver.py
 #  scripts/ObserverHandler.py
   scripts/RosWatchdog.py
+  nodes/WatchdogNode.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

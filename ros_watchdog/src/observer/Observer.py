@@ -6,16 +6,40 @@ import rospy
 import os
 import time
 from enum import Enum, unique
+import typing as typ
 import configparser
 
 
+# TODO(scm): move this to utils module
+class OrderedEnum(Enum):
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value >= other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value <= other.value
+        return NotImplemented
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+    pass
+
 @unique
-class ObserverStatus(Enum):
-    NOMINAL = 0             # -> NOMINAL
-    STARTING = 1            # -> NOMINAL
-    NONCRITICAL = 2         # -> NON CRITICAL (message rate)
-    ERROR = 3               # -> FAIL (depending on severity)
-    UNOBSERVED = -1         # not started yet
+class ObserverStatus(OrderedEnum):
+    UNOBSERVED = 0         # not started yet
+    NOMINAL = 1             # -> NOMINAL
+    STARTING = 2            # -> NOMINAL
+    NONCRITICAL = 4         # -> NON CRITICAL (message rate)
+    ERROR = 8               # -> FAIL (depending on severity)
     pass  # class ObserverStatus
 
 
@@ -55,6 +79,16 @@ class Observer(object):
 
         pass  # def __init__(...)
 
+    ####################
+    # PUBLIC METHODS
+    ####################
+
+    def start_observation(self):
+        pass
+
+    def stop_observation(self):
+        pass
+
     def do_verbose(self):
         # type: (...) -> bool
         """Returns true if verbose is active"""
@@ -73,3 +107,92 @@ class Observer(object):
         return self.id
 
     pass  # class Observer()
+
+
+class Observers(object):
+
+    def __init__(self,
+                 cfg_file,
+                 name="Observations",
+                 verbose=False,
+                 ):
+        # preliminary checks for cfg file
+        assert (os.path.exists(cfg_file))
+
+        # setup observer parameters
+        self.name = name                            # type: str
+        self.cfg_file = cfg_file                    # type: str
+
+        # set initial observers and statuses
+        self.observers = {}                         # type: typ.Dict[str, Observer]
+        self.statuses = {}                          # type: typ.Dict[str, ObserverStatus]
+
+        # setup flags
+        self.__bVerbose = verbose                   # type: bool
+
+        # read config
+        self.config = self._read_config()           # type: configparser.ConfigParser
+        pass
+
+    ####################
+    # PUBLIC METHODS
+    ####################
+
+    def start_observation(self):
+        for obs in self.observers.values():
+            obs.start_observation()
+            pass
+        pass
+
+    def stop_observation(self):
+        for obs in self.observers.values():
+            obs.stop_observation()
+            pass
+        pass
+
+    def exists(self, name):
+        # type: (...) -> bool
+        # return self.observers.has_key(name)
+        # python 3 change
+        return name in self.observers
+
+    ####################
+    # PROTECTED METHODS
+    ####################
+
+    def _read_config(self):
+        config = configparser.ConfigParser()
+        config.sections()
+        config.read(self.cfg_file)
+        return config
+
+    ####################
+    # GETTER
+    ####################
+
+    def get_name(self):
+        return self.name
+
+    def get_cfg_file(self):
+        return self.cfg_file
+
+    def get_statuses(self):
+        self.statuses = {}
+        for key, val in self.observers.items():
+            self.statuses[key] = val.get_status()
+            pass
+        return self.statuses
+
+    def get_observers(self):
+        return self.observers
+
+    ####################
+    # BOOLEANS
+    ####################
+
+    def do_verbose(self):
+        # type: (...) -> bool
+        """Returns true if verbose is active"""
+        return self.__bVerbose
+
+    pass  # class Observers()

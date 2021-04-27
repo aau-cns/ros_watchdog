@@ -133,8 +133,6 @@ class ObserverHandler(object):
 
         return self.sensors_obs.get_status()
 
-
-
     def start_observation(self):
         self.nodes_obs.start_observation()
         # topic observer will start automatically with node observer

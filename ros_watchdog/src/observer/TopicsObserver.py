@@ -15,27 +15,27 @@ import math
 from enum import Enum, unique
 import typing as typ
 
-from observer.Observer import Observer, ObserverStatus, ObserverSeverity
+from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity
 
 
-@unique
-class TopicStatus(Enum):    # RosWatchdog.status
-    NOMINAL = 0             # -> NOMINAL
-    STARTING = 1            # -> NOMINAL
-    NONCRITICAL = 2         # -> NON CRITICAL (message rate)
-    ERROR = 3               # -> FAIL (depending on severity)
-    UNOBSERVED = -1         # not started yet
-    pass  # class TopicStatus(Enum)
-
-
-@unique
-class TopicActions(Enum):    # RosWatchdog.status
-    NONE = 0                    # -> OK
-    WARNING = 1                 # -> OK
-    ERROR = 2                   # -> ABORT
-    RESTART_ROSNODE = 3         # -> HOLD
-    RESTART_SENSOR = 4          # -> HOLD
-    pass
+# @unique
+# class TopicStatus(Enum):    # RosWatchdog.status
+#     NOMINAL = 0             # -> NOMINAL
+#     STARTING = 1            # -> NOMINAL
+#     NONCRITICAL = 2         # -> NON CRITICAL (message rate)
+#     ERROR = 3               # -> FAIL (depending on severity)
+#     UNOBSERVED = -1         # not started yet
+#     pass  # class TopicStatus(Enum)
+#
+#
+# @unique
+# class TopicActions(Enum):    # RosWatchdog.status
+#     NONE = 0                    # -> OK
+#     WARNING = 1                 # -> OK
+#     ERROR = 2                   # -> ABORT
+#     RESTART_ROSNODE = 3         # -> HOLD
+#     RESTART_SENSOR = 4          # -> HOLD
+#     pass
 
 
 class TopicObserver(Observer):
@@ -160,16 +160,17 @@ class TopicObserver(Observer):
         [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
 
         # set status depending on rate
-        if abs(rate - self.rate) > self.__rate_margin:
-            # error condition
+        if self.rate - rate > self.__rate_margin:
+            # error condition; rate not fullfilled
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
             return ObserverStatus.ERROR
 
-        if self.rate/20 < abs(rate - self.rate) < self.__rate_margin:
+        if self.rate/100 < abs(rate - self.rate) < self.__rate_margin or rate - self.rate > self.__rate_margin:
             # within boundaries for rate margin (accounting for numerical errors with rate/20)
+            # or rate is higher than expected
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " slightly differs: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
@@ -192,39 +193,42 @@ class TopicObserver(Observer):
     def get_action(self):
         return self.action
 
-class TopicsObserver(object):
+class TopicsObserver(Observers):
     """Node example class."""
 
     def __init__(self,
-                 topics_cfg_file,
+                 cfg_file,
                  verbose=True,
                  use_startup_to=True,
                  ):
-        # do preliminary checks
-        assert (os.path.exists(topics_cfg_file))
-        self.bVerbose = verbose
+        # call super constructor
+        super(TopicsObserver, self).__init__(
+            cfg_file=cfg_file,
+            verbose=verbose,
+            name="TopicsObserver"
+        )
+        rospy.logdebug("Setting up TopicsObserver ")
 
         # setup ID counter
         self.__cnt_id = 1   # always start with 1, 0 --> global
 
-        # read configs
-        self.observers = {}
-        config = configparser.ConfigParser()
-        config.sections()
-        config.read(topics_cfg_file)
-        self.items = config.items()
+        # read config items
+        config_items = self.config.items()
 
         # the first element is default section!
-        if len(self.items) < 2:
-            rospy.logerr("ERROR: no topic objects in " + str(topics_cfg_file))
+        if len(config_items) < 2:
+            rospy.logerr("ERROR: no topic objects in " + str(cfg_file))
             pass
 
         # create dictionary of topic observers
-        for key, section in self.items:
+        for key, section in config_items:
+            # check for default key
             if key != 'DEFAULT':
-                if self.bVerbose:
-                    print(key)
+                # debugging
+                if self.do_verbose():
+                    rospy.loginfo("Adding topic %s" % str(key))
                     pass
+
                 # check startup timeout
                 timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
 
@@ -247,26 +251,26 @@ class TopicsObserver(object):
             pass
         pass
 
-    def exists(self, name):
-        # type: (...) -> bool
-        # return self.observers.has_key(name)
-        # python 3 change
-        return name in self.observers
+    # def exists(self, name):
+    #     # type: (...) -> bool
+    #     # return self.observers.has_key(name)
+    #     # python 3 change
+    #     return name in self.observers
+    #
+    # def start_observation(self):
+    #     for key, val in self.observers.items():
+    #         val.start_observation()
+    #
+    # def stop_observation(self):
+    #     for key, val in self.observers.items():
+    #         val.stop_observation()
 
-    def start_observation(self):
-        for key, val in self.observers.items():
-            val.start_observation()
-
-    def stop_observation(self):
-        for key, val in self.observers.items():
-            val.stop_observation()
-
-    def get_status(self):
-        status = {}
-        for key, val in self.observers.items():
-            status[key] = val.get_status()
-
-        return status
+    # def get_status(self):
+    #     status = {}
+    #     for key, val in self.observers.items():
+    #         status[key] = val.get_status()
+    #
+    #     return status
 
     def get_observers(self):
         return self.observers
@@ -287,7 +291,6 @@ class TopicsObserver(object):
             if node_name == val.node_name:
                 topic_names.append(key)
         return topic_names
-
 
 
 if __name__ == '__main__':
