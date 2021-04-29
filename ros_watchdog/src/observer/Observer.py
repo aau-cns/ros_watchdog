@@ -36,10 +36,10 @@ class Observer(object):
     """A general interface for any observer"""
 
     def __init__(self,
-                 name,              # type: str
-                 id,                # type: int
-                 timeout=0.0,       # type: float
-                 verbose=False,     # type: bool
+                 name,                              # type: str
+                 id,                                # type: int
+                 timeout=0.0,                       # type: float
+                 verbose=False,                     # type: bool
                  ):
         # type: (...) -> None
         """Constructor for any observer"""
@@ -63,27 +63,55 @@ class Observer(object):
     ####################
 
     def start_observation(self):
+        self.status = ObserverStatus.STARTING
         pass
 
     def stop_observation(self):
+        self.status = ObserverStatus.UNOBSERVED
         pass
+
+    def update(self):
+        """Updates the status of the observer"""
+        pass
+
+    def act(self):
+        pass
+
+    ####################
+    # GETTER
+    ####################
+
+    def get_name(self):
+        # type: (...) -> str
+        return self.name
+
+    def get_status(self,
+                   do_update=False,
+                   ):
+        # type: (...) -> ObserverStatus
+        """returns the status of the observer"""
+        # perform update if requested
+        if do_update:
+            self.update()
+            pass
+        return self.status
+
+    def get_severity(self):
+        # type: (...) -> ObserverSeverity
+        return self.severity
+
+    def get_id(self):
+        # type: (...) -> int
+        return self.id
+
+    ####################
+    # BOOLEANS
+    ####################
 
     def do_verbose(self):
         # type: (...) -> bool
         """Returns true if verbose is active"""
         return self.__bVerbose
-
-    def get_name(self):
-        return self.name
-
-    def get_status(self):
-        return self.status
-
-    def get_severity(self):
-        return self.severity
-
-    def get_id(self):
-        return self.id
 
     pass  # class Observer()
 
@@ -91,16 +119,17 @@ class Observer(object):
 class Observers(object):
 
     def __init__(self,
-                 cfg_file,
-                 name="Observations",
-                 verbose=False,
+                 cfg_file,                          # type: str
+                 name="Observations",               # type: str
+                 verbose=False,                     # type: bool
                  ):
-        # preliminary checks for cfg file
-        assert (os.path.exists(cfg_file))
-
         # setup observer parameters
         self.name = name                            # type: str
         self.cfg_file = cfg_file                    # type: str
+        rospy.logdebug("Setting up %s" % (self.get_name()))
+
+        # preliminary checks for cfg file
+        assert (os.path.exists(cfg_file))
 
         # set initial observers and statuses
         self.observers = {}                         # type: typ.Dict[str, Observer]
@@ -112,6 +141,7 @@ class Observers(object):
 
         # read config
         self.config = self._read_config()           # type: configparser.ConfigParser
+        self.config_dict = self._get_config_dict()  # type: dict
         pass
 
     ####################
@@ -146,9 +176,9 @@ class Observers(object):
         new_statuses = {}
         new_changes = {}
 
-        # check all statueses
+        # check all statuses
         for key, val in self.observers.items():
-            obs_status = val.get_status()
+            obs_status = val.get_status(do_update=True)
             new_statuses[key] = obs_status
 
             # check if status has changed
@@ -197,6 +227,17 @@ class Observers(object):
         return config
 
     ####################
+    # I/O METHODS
+    ####################
+
+    def print_statuses(self):
+        for name, status in self.statuses.items():
+            rospy.loginfo("%s == asset [%s]: %s" %
+                          (self.get_name(), str(name), str(status)))
+            pass
+        pass  # def print_statuses()
+
+    ####################
     # GETTER
     ####################
 
@@ -214,6 +255,27 @@ class Observers(object):
 
     def get_observers(self):
         return self.observers
+
+    def get_observer_id(self, key=None):
+        if key is None:
+            # TODO(scm)
+            pass
+        else:
+            return self.observers[key].get_id()
+        pass  # def get_observer_id(...)
+
+    def _get_config_dict(self):
+        config_dict = dict(self.config.items())
+        # check length of config items
+        if len(config_dict) < 2:
+            # no elements in config
+            rospy.logwarn("%s == ERROR: no assets in %s" % (self.get_name(), self.cfg_file))
+            return {}
+        else:
+            # remove 'DEFAULT' key from dict
+            config_dict.pop('DEFAULT', None)
+            return config_dict
+        pass  # _get_config_dict()
 
     ####################
     # BOOLEANS

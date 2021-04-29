@@ -9,6 +9,7 @@ from enum import Enum, unique
 from observer.Observer import Observer, Observers, ObserverStatus
 from observer.TopicsObserver import TopicsObserver
 from observer.NodesObserver import NodesObserver
+from observer.DriversObserver import DriversObserver
 from observer.utils.Enums import OrderedEnum
 
 
@@ -43,7 +44,6 @@ class Watchdog(object):
 
         # setup flags
         self.__bVerbose = verbose                   # type: bool
-        self.__bAllowDriverRestart = False          # type: bool
 
         pass  # def __init__(...)
 
@@ -75,7 +75,7 @@ class Watchdog(object):
                 # observer = NodesObserver(cfg_file, verbose=self.__bVerbose)
                 pass
             elif ckey == Watchdog.ObserverKeys.DRIVER:
-                # observer = DriversObserver(cfg_file, verbose=self.__bVerbose) TODO(scm)
+                observer = DriversObserver(cfg_file, verbose=self.__bVerbose)
                 pass
             else:
                 rospy.logerr("Key not implemented %s" % str(ckey))
@@ -115,6 +115,18 @@ class Watchdog(object):
         else:
             rospy.logwarn("Did not start watchdog yet, cannot watch. O.O")
         pass  # def watch
+
+    def act(self,
+            observer_key,
+            asset_key,
+            action_type,
+            ):
+        # (...) -> None
+        """performs action for asset in any observer"""
+
+        # TODO(scm): depending on interface
+
+        pass  # def act()
 
     def stop(self):
         pass  # def stop
@@ -211,4 +223,15 @@ class Watchdog(object):
 
         return changes
         pass  # def get_status_changes()
+
+    def get_asset_id(self,
+                     observers_key,
+                     asset_key,
+                     ):
+        if observers_key == Watchdog.ObserverKeys.GLOBAL:
+            return 0
+        else:
+            return self.__observers[observers_key].get_observer_id(key=asset_key)
+        pass  # def get_asset_id(...)
+
     pass  # class Watchdog

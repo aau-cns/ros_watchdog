@@ -39,7 +39,7 @@ class Sensor(Observer):
     def restart(self):
         self.num_restarts += 1
 
-        print('restart sensor ' + str(self.name) + ' num attempt:[' + str(self.num_restarts) + ']')
+        print('drivers sensor ' + str(self.name) + ' num attempt:[' + str(self.num_restarts) + ']')
         file = os.path.join(self.dirname, self.restart_script)
         print(' -- running: ' + str(file))
         rc = call(file, shell=True)

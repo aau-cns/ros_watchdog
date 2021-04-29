@@ -39,22 +39,23 @@ from observer.Observer import Observer, Observers, ObserverStatus, ObserverSever
 
 
 class TopicObserver(Observer):
-    def __init__(self,
-                 topic_name,            # type: str
-                 observer_id,           # type: int
-                 rate=1,                # type: typ.Union[float, str]
-                 severity=0,            # type: typ.Union[int, str]
-                 watchdog_action=0,     # type: typ.Union[int, str]
-                 timeout=0.0,
-                 sensor_name='',
-                 node_name='',
-                 window_size=10,
-                 verbose=True,
-                 rate_margin=0.1,
-                 ):
+    def __init__(
+            self,
+            topic_name,                             # type: str
+            observer_id,                            # type: int
+            timeout=0.0,                            # type: typ.Union[float, str]
+            rate=1,                                 # type: typ.Union[float, str]
+            severity=0,                             # type: typ.Union[int, str]
+            watchdog_action=0,                      # type: typ.Union[int, str]
+            sensor_name='',
+            node_name='',
+            window_size=10,
+            rate_margin=0.1,
+            verbose=True,                           # type: bool
+            ):
 
         # initialize super
-        super(TopicObserver, self).__init__(topic_name, observer_id, timeout, verbose)
+        super(TopicObserver, self).__init__(topic_name, observer_id, float(timeout), verbose)
 
         # set topic values
         self.rate = float(rate)
@@ -140,9 +141,9 @@ class TopicObserver(Observer):
 
         return rate, mean, std_dev, max_delta, min_delta
 
-    def get_status(self):
+    def update(self):
         if self.status == ObserverStatus.UNOBSERVED:
-            return ObserverStatus.UNOBSERVED
+            return  # ObserverStatus.UNOBSERVED
 
         t_curr = rospy.get_rostime().to_sec()
 
@@ -150,12 +151,15 @@ class TopicObserver(Observer):
         if t_curr < self.time_operational:
             if self.do_verbose():
                 print("*  [" + self.name + "] still within initial timeout...")
-            return ObserverStatus.STARTING
+                pass
+            self.status = ObserverStatus.STARTING
+            return
 
         if self.msg_t0 < 0:
             if self.do_verbose():
                 print("*  [" + self.name + "] no message received yet...")
-            return ObserverStatus.ERROR
+            self.status = ObserverStatus.ERROR
+            return
 
         [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
 
@@ -166,7 +170,8 @@ class TopicObserver(Observer):
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
-            return ObserverStatus.ERROR
+            self.status = ObserverStatus.ERROR
+            return
 
         if self.rate/100 < abs(rate - self.rate) < self.__rate_margin or rate - self.rate > self.__rate_margin:
             # within boundaries for rate margin (accounting for numerical errors with rate/20)
@@ -175,7 +180,8 @@ class TopicObserver(Observer):
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " slightly differs: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
-            return ObserverStatus.NONCRITICAL
+            self.status = ObserverStatus.NONCRITICAL
+            return
 
         else:
             # nominal condition
@@ -183,7 +189,8 @@ class TopicObserver(Observer):
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached: " + str(rate))
                 print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
-            return ObserverStatus.NOMINAL
+            self.status = ObserverStatus.NOMINAL
+            return
 
         pass  # def get_status()
 
@@ -197,9 +204,9 @@ class TopicsObserver(Observers):
     """Node example class."""
 
     def __init__(self,
-                 cfg_file,
-                 verbose=True,
-                 use_startup_to=True,
+                 cfg_file,                          # type: str
+                 verbose=True,                      # type: bool
+                 use_startup_to=True,               # type: bool
                  ):
         # call super constructor
         super(TopicsObserver, self).__init__(
@@ -207,49 +214,38 @@ class TopicsObserver(Observers):
             verbose=verbose,
             name="TopicsObserver"
         )
-        rospy.logdebug("Setting up TopicsObserver ")
 
         # setup ID counter
         self.__cnt_id = 1   # always start with 1, 0 --> global
 
-        # read config items
-        config_items = self.config.items()
-
-        # the first element is default section!
-        if len(config_items) < 2:
-            rospy.logerr("ERROR: no topic objects in " + str(cfg_file))
-            pass
-
         # create dictionary of topic observers
-        for key, section in config_items:
-            # check for default key
-            if key != 'DEFAULT':
-                # debugging
-                if self.do_verbose():
-                    rospy.loginfo("Adding topic %s" % str(key))
-                    pass
-
-                # check startup timeout
-                timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
-
-                # read configuration:
-                self.observers[key] = TopicObserver(
-                    topic_name=key,
-                    observer_id=self.__cnt_id,
-                    rate=float(section.get('rate', '1.0')),
-                    rate_margin=float(section.get('margin', '0.1')),
-                    severity=int(section.get('severity', '0')),
-                    watchdog_action=int(section.get('watchdog_action', '0')),
-                    timeout=timeout,
-                    sensor_name=str(section.get('sensor_name', '')),
-                    node_name=str(section.get('node_name', '')),
-                    verbose=verbose,
-                )
-
-                self.__cnt_id += 1
+        for key, section in self.config_dict.items():
+            # debugging
+            if self.do_verbose():
+                rospy.loginfo("Adding topic %s" % str(key))
                 pass
-            pass
-        pass
+
+            # check startup timeout
+            timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
+
+            # read configuration:
+            self.observers[key] = TopicObserver(
+                topic_name=key,
+                observer_id=self.__cnt_id,
+                rate=float(section.get('rate', '1.0')),
+                rate_margin=float(section.get('margin', '0.1')),
+                severity=int(section.get('severity', '0')),
+                watchdog_action=int(section.get('watchdog_action', '0')),
+                timeout=timeout,
+                sensor_name=str(section.get('sensor_name', '')),
+                node_name=str(section.get('node_name', '')),
+                verbose=verbose,
+            )
+
+            self.__cnt_id += 1
+            pass  # for key, section in self.config_dict.items()
+
+        pass  # def __init__(...)
 
     # def exists(self, name):
     #     # type: (...) -> bool
@@ -272,12 +268,12 @@ class TopicsObserver(Observers):
     #
     #     return status
 
-    def get_observers(self):
-        return self.observers
-
-    def print_status(self):
-        for name, status in self.get_status().items():
-            print("- topic:  [" + str(name) + "]:" + str(status.name))
+    # def get_observers(self):
+    #     return self.observers
+    #
+    # def print_status(self):
+    #     for name, status in self.get_status().items():
+    #         print("- topic:  [" + str(name) + "]:" + str(status.name))
 
     def get_action(self, name):
         if self.exists(name):

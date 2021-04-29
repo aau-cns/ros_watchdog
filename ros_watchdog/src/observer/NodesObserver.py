@@ -80,7 +80,7 @@ class NodeObserver(Observer):
 
         if self.num_restarts < self.max_restart_attempts:
             if self.do_verbose():
-                rospy.loginfo("-- restart node [" + self.name + "]")
+                rospy.loginfo("-- drivers node [" + self.name + "]")
 
             self.num_restarts += 1
             if self.kill_node():
@@ -90,7 +90,7 @@ class NodeObserver(Observer):
                 return False
         elif self.num_restarts >= self.max_restart_attempts:
             self.num_restarts += 1
-            rospy.logwarn("-- node [" + self.name + "] exceeded restart attempts!")
+            rospy.logwarn("-- node [" + self.name + "] exceeded drivers attempts!")
 
         return False
 
@@ -110,16 +110,16 @@ class NodeObserver(Observer):
 
         t_curr = rospy.get_rostime().now().to_sec()
         if self.t_running > t_curr:
-            return ObserverStatus.STARTING  # all related TopicObserver need to restart their observation! as long as the node is restarting
+            return ObserverStatus.STARTING  # all related TopicObserver need to drivers their observation! as long as the node is restarting
 
         return ObserverStatus.NOMINAL
         # return self.status
 
     # def update_status(self):
     #     # check if node observer was started
-    #     # check if node is running otherwise restart
-    #     # check num restart attempts
-    #     # check if is in restart interval
+    #     # check if node is running otherwise drivers
+    #     # check num drivers attempts
+    #     # check if is in drivers interval
     #     # otherwise OK.
     #     if self.t_running < 0 or self.t0 < 0:
     #         self.status = ObserverStatus.UNOBSERVED
@@ -136,7 +136,7 @@ class NodeObserver(Observer):
     #
     #     t_curr = rospy.get_rostime().now().to_sec()
     #     if self.t_running > t_curr:
-    #         self.status = ObserverStatus.STARTING  # all related TopicObserver need to restart their observation! as long as the node is restarting
+    #         self.status = ObserverStatus.STARTING  # all related TopicObserver need to drivers their observation! as long as the node is restarting
     #         return
     #
     #     self.status = ObserverStatus.NOMINAL

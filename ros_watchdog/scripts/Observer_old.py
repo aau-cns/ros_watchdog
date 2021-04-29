@@ -127,21 +127,21 @@ class SensorsObserver(object):
                     pass
                 elif action == TopicActions.RESTART_ROSNODE:
                     if self.nodes_obs.observers[node_name].restart_node():
-                        print("*  - topic action -> restart node SUCCESS")
+                        print("*  - topic action -> drivers node SUCCESS")
                     else:
-                        print("*  - topic action -> restart node FAILURE")
+                        print("*  - topic action -> drivers node FAILURE")
                 elif action == TopicActions.RESTART_SENSOR:
                     if self.sensors_obs.exists(sensor_name):
                         if not self.sensors_obs.observers[sensor_name].restart():
                             print("*    sensor " + str(sensor_name) + " restarting failed!")
 
                         if self.nodes_obs.observers[node_name].restart_node():
-                            print("*  - topic action -> restart node SUCCESS")
+                            print("*  - topic action -> drivers node SUCCESS")
                         else:
-                            print("*  - topic action -> restart node FAILURE")
+                            print("*  - topic action -> drivers node FAILURE")
                     else:
                         print("*    sensor " + str(sensor_name) + " does not exist!")
-                    print("*  - topic action -> restart sensor...")
+                    print("*  - topic action -> drivers sensor...")
                 else:
                     print("*  - unknown action")
                     assert(False)

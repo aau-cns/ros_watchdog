@@ -22,6 +22,7 @@ class WatchdogNode(object):
         # ROS parameters
         self.topics_cfg_file = rospy.get_param("~topics_cfg_file", "topics.ini")
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
+        self.drivers_cfg_file = rospy.get_param("~drivers_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
         self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
         self.bVerbose = rospy.get_param("~bVerbose", True)
@@ -32,7 +33,8 @@ class WatchdogNode(object):
         self.pub_log = rospy.Publisher("/watchdog/log", StatusChangesArrayStamped, queue_size=1)
 
         # declare services
-        self.start_srv = rospy.Service('service/start', StartService, self.handle_start_service)
+        self.start_srv = rospy.Service(
+            '/watchdog/service/start', StartService, self.handle_start_service)
 
         # declare counters
         self.__cntStatus = 0        # type: int
@@ -99,7 +101,8 @@ class WatchdogNode(object):
 
         # initialize watchdog
         config_files = {
-            Watchdog.ObserverKeys.TOPIC: self.topics_cfg_file
+            Watchdog.ObserverKeys.TOPIC: self.topics_cfg_file,
+            Watchdog.ObserverKeys.DRIVER: self.drivers_cfg_file,
         }
         self.watchdog.init(config_files)
 
@@ -160,6 +163,7 @@ class WatchdogNode(object):
 
                 for assetkey, asset_status in obs.items():
                     status_msg = SystemStatus()
+                    status_msg.id = self.watchdog.get_asset_id(obskey, assetkey)
                     status_msg.group = obskey.value
                     status_msg.name = str(assetkey)
                     status_msg.status = asset_status.value
@@ -173,6 +177,7 @@ class WatchdogNode(object):
 
                 for assetkey, asset_status in obs.items():
                     status_msg = SystemStatus()
+                    status_msg.id = self.watchdog.get_asset_id(obskey, assetkey)
                     status_msg.group = obskey.value
                     status_msg.name = str(assetkey)
                     status_msg.status = asset_status.value
@@ -186,7 +191,7 @@ class WatchdogNode(object):
 
             # increase counter
             self.__cntLog += 1
-            pass
+            pass  # if len(status_changes) > 0
 
         pass  # def __publish_changes()
 
