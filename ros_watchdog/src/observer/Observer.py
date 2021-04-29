@@ -9,29 +9,8 @@ from enum import Enum, unique
 import typing as typ
 import configparser
 
+from observer.utils.Enums import OrderedEnum
 
-# TODO(scm): move this to utils module
-class OrderedEnum(Enum):
-    def __ge__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value >= other.value
-        return NotImplemented
-
-    def __gt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value > other.value
-        return NotImplemented
-
-    def __le__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value <= other.value
-        return NotImplemented
-
-    def __lt__(self, other):
-        if self.__class__ is other.__class__:
-            return self.value < other.value
-        return NotImplemented
-    pass
 
 @unique
 class ObserverStatus(OrderedEnum):
@@ -126,6 +105,7 @@ class Observers(object):
         # set initial observers and statuses
         self.observers = {}                         # type: typ.Dict[str, Observer]
         self.statuses = {}                          # type: typ.Dict[str, ObserverStatus]
+        self.status_changes = {}                    # type: typ.Dict[str, ObserverStatus]
 
         # setup flags
         self.__bVerbose = verbose                   # type: bool
@@ -156,6 +136,56 @@ class Observers(object):
         # python 3 change
         return name in self.observers
 
+    def update_statuses(self):
+        # debug info
+        if self.do_verbose():
+            rospy.loginfo("%s == updating statuses" % self.get_name())
+            pass
+
+        # new variables
+        new_statuses = {}
+        new_changes = {}
+
+        # check all statueses
+        for key, val in self.observers.items():
+            obs_status = val.get_status()
+            new_statuses[key] = obs_status
+
+            # check if status has changed
+            if key in self.statuses.keys():
+                # key present, check if value has changed
+                if not self.statuses[key] == obs_status:
+                    # status has changed, save change
+                    new_changes[key] = obs_status
+
+                    if self.do_verbose():
+                        rospy.loginfo(
+                            "%s == %s status changed: %d (%s)"
+                            % (self.get_name(), str(key), obs_status.value,str(obs_status))
+                        )
+                        pass
+                    pass
+                pass
+            else:
+                # key not present, thus status change
+                new_changes[key] = obs_status
+
+                if self.do_verbose():
+                    rospy.loginfo(
+                        "%s == %s status added: %d (%s)"
+                        % (self.get_name(), str(key), obs_status.value,str(obs_status))
+                    )
+                    pass
+                pass
+            pass
+
+        # save statuses and changes
+        self.statuses = new_statuses
+        self.status_changes = new_changes
+
+        # return current statuses
+        return self.statuses
+
     ####################
     # PROTECTED METHODS
     ####################
@@ -177,11 +207,10 @@ class Observers(object):
         return self.cfg_file
 
     def get_statuses(self):
-        self.statuses = {}
-        for key, val in self.observers.items():
-            self.statuses[key] = val.get_status()
-            pass
         return self.statuses
+
+    def get_status_changes(self):
+        return self.status_changes
 
     def get_observers(self):
         return self.observers

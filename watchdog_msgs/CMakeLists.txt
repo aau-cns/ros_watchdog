@@ -8,6 +8,8 @@ add_message_files(
   FILES
   SystemStatus.msg
   SystemStatusStamped.msg
+  StatusChangesArray.msg
+  StatusChangesArrayStamped.msg
 )
 
 add_service_files(

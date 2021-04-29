@@ -14,7 +14,7 @@
         <param name="topics_cfg_file"   value="$(find watchdog_bringup)/config/topics.ini"/>
         <param name="sensors_cfg_file"  value="$(find watchdog_bringup)/config/sensors.ini"/>
         <param name="nodes_cfg_file"    value="$(find watchdog_bringup)/config/nodes.ini"/>
-        <param name="topic_check_rate"  value="1.0"/>
+        <param name="topic_check_rate"  value="0.5"/>
         <param name="bVerbose"          value="$(arg do_verbose)"/>
         <param name="bUseStartupTO"     value="$(arg use_startup_to)"/>
 

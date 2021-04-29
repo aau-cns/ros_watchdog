@@ -1,5 +1,6 @@
 # Sensor Information
 uint8               id      # Sensor ID
+uint8               group   # Sensor Group (Topic, Node, Driver, etc)
 string              name    # Sensor Name
 
 # Status Information

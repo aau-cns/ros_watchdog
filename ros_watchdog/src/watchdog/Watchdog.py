@@ -9,12 +9,13 @@ from enum import Enum, unique
 from observer.Observer import Observer, Observers, ObserverStatus
 from observer.TopicsObserver import TopicsObserver
 from observer.NodesObserver import NodesObserver
+from observer.utils.Enums import OrderedEnum
 
 
 class Watchdog(object):
 
     @unique
-    class States(Enum):
+    class States(OrderedEnum):
         STOPPED = 0
         INITIALIZING = 1
         STARTING = 2
@@ -22,10 +23,11 @@ class Watchdog(object):
         pass  # class Watchdog.States
 
     @ unique
-    class ObserverKeys(Enum):
-        TOPIC = 0
-        NODE = 1
-        DRIVER = 2
+    class ObserverKeys(OrderedEnum):
+        GLOBAL = 0
+        TOPIC = 1
+        NODE = 2
+        DRIVER = 3
         pass  # class Watchdog.ObserverKeys
 
     def __init__(self,
@@ -41,6 +43,7 @@ class Watchdog(object):
 
         # setup flags
         self.__bVerbose = verbose                   # type: bool
+        self.__bAllowDriverRestart = False          # type: bool
 
         pass  # def __init__(...)
 
@@ -96,10 +99,21 @@ class Watchdog(object):
             obs.start_observation()
             pass
 
+        # set running state
+        self.__state = Watchdog.States.RUNNING
         rospy.logdebug("Starting Watchdog -- DONE")
         pass  # def start
 
     def watch(self):
+        # check if in correct state
+        if self.__state == Watchdog.States.RUNNING:
+            # update statuses
+            for obs in self.__observers.values():
+                obs.update_statuses()
+                pass
+            pass
+        else:
+            rospy.logwarn("Did not start watchdog yet, cannot watch. O.O")
         pass  # def watch
 
     def stop(self):
@@ -114,22 +128,87 @@ class Watchdog(object):
         """Returns the current state of the watchdog"""
         return self.__state
 
-    def get_status_global(self):
+    def get_status_global(self,
+                          as_int=True,
+                          with_info=True,
+                          ):
         global_status = ObserverStatus.UNOBSERVED
         info_string = ""
 
-        # check the max (=worst) status of each observation
-        for key, obs in self.__observers.items():
-            new_max = max(obs.get_statuses().values())
+        # check for current state of WD
+        if self.__state == Watchdog.States.STOPPED:
+            info_string = "Watchdog is not running"
+            pass
+        elif self.__state == Watchdog.States.STARTING or self.__state == Watchdog.States.INITIALIZING:
+            global_status = ObserverStatus.STARTING
+            info_string = "Watchdog is starting..."
+            pass
+        else:
+            # check the max (=worst) status of each observation
+            for key, obs in self.__observers.items():
+                vals = obs.get_statuses().values()
+                if len(vals) > 0:
+                    new_max = max(vals)
 
-            # debug
-            if self.__bVerbose:
-                rospy.loginfo("Global Status %s: %d" % (str(key), new_max.value))
-                pass
+                    # debug
+                    if self.__bVerbose:
+                        rospy.loginfo("Global Status %s: %d (%s)"
+                                      % (str(key), new_max.value, str(new_max)))
+                        pass
 
-            global_status = max(global_status, new_max)
-            info_string += "Status %s: %d\n" % (str(key), new_max.value)
+                    global_status = max(global_status, new_max)
+                    info_string += "Status %s: %d\n" % (str(key), new_max.value)
+                    pass
+                else:
+                    info_string += "Status %s: no entries to watch\n" % (str(key))
+
+                    # debug
+                    if self.__bVerbose:
+                        rospy.loginfo("Global Status %s: no entries to watch"
+                                      % (str(key)))
+                        pass
+                    pass
             pass
 
-        return global_status.value, info_string
+        if as_int:
+            global_status = global_status.value
+            pass
+
+        if with_info:
+            return global_status, info_string
+        else:
+            return global_status
+        pass
+
+    def get_status_all(self):
+        statuses = {}
+        statuses[Watchdog.ObserverKeys.GLOBAL] = \
+            {"global": self.get_status_global(as_int=False, with_info=False)}
+
+        # check for current state of WD
+        if self.__state == Watchdog.States.RUNNING:
+            for key, obs in self.__observers.items():
+                statuses[key] = obs.get_statuses()
+                pass
+            pass
+
+        return statuses
+        pass  # get_status_all()
+
+    def get_status_changes(self):
+        changes = {}
+        # check for current state of WD
+        if self.__state == Watchdog.States.RUNNING:
+            for key, obs in self.__observers.items():
+                change = obs.get_status_changes()
+
+                # check if change happend
+                if len(change) > 0:
+                    changes[key] = change
+                    pass  # if len(change) > 0
+                pass  # for key, obs in self.__observers.items()
+            pass  # if self.__state == Watchdog.States.RUNNING
+
+        return changes
+        pass  # def get_status_changes()
     pass  # class Watchdog
