@@ -1,3 +1,19 @@
+---
+title: Watchdog State Machine
+author:
+  - Martin Scheiber
+  - Control of Networked Systems, University of Klagenfurt, Austria
+date: 29.04.2021
+subtitle: Version 1.0
+
+documentclass: scrartcl
+highlight: haddock
+numbersections: true
+secnumdepth: 3
+toc: true
+---
+
+
 ### Watchdog State Machine
 
 ```plantuml
@@ -32,6 +48,103 @@ fail --> nominal : rate ok
 
 error --> nominal : node&rate ok
 error -> fail : node ok\nrate marginal
+
+@enduml
+```
+
+```plantuml
+@startuml
+
+skinparam monochrome true
+scale max 1000*1000
+
+title Topics State Machine
+
+state "UNDEFINED" as undef
+state "STARTING" as start
+
+state "STARTING" as start{
+  state "init" as incheck1
+  state check11 <<choice>>
+  state check12 <<choice>>
+  state incheck1 : operation time check
+  [*] --> incheck1 : update_call()
+  incheck1 --> check11 : < initial_timeout?
+  check11 --> [*] : true
+  check11 --> check12: false\nreceived_msg?
+}
+state "NOMINAL" as nominal {
+  [*] --> freq: update call
+}
+
+state "ERROR" as error {
+  [*] --> freq: update_call()
+}
+state "FAILURE" as fail
+
+state "frequency check" as freq {
+  state check51 <<choice>>
+  [*] --> check51: check frequency
+}
+freq: marg = percentage margin for failure (not error)
+freq: num_dev = numerical difference for allowed pass
+freq: rate = required frequency of sensor
+
+state "FAILURE" as fail {
+  [*] --> freq:update_call()
+}
+
+check12 --> error: false
+check12 -> freq: true
+
+check51 --> error: rate-freq < marg
+check51 --> nominal : abs(rate - freq) < num_dev
+check51 --> fail : num_dev < abs(rate - freq) < marg \n OR \n freq-rate > marg
+
+'check2 --> error : false
+'check3 --> nominal : true
+'in -> error : max_attempts\nreached
+
+[*] --> undef
+undef : initial state
+undef --> start : start\nrequest
+start : execute bash to check if running
+
+@enduml
+```
+
+```plantuml
+@startuml
+
+skinparam monochrome true
+scale max 1000*1000
+
+title Node State Machine
+
+state "UNDEFINED" as undef
+state "STARTING" as start
+
+state "STARTING" as start{
+  [*] --> node : update_call()
+}
+state "NOMINAL" as nominal {
+  [*] --> node: update_call()
+}
+state "ERROR" as error {
+  [*] --> node: update_call()
+}
+
+state "node check" as node {
+  state check51 <<choice>>
+  [*] --> check51: node_running?
+}
+
+check51 --> nominal: true
+check51 --> error: false
+
+[*] --> undef
+undef : initial state
+undef --> start : start\nrequest
 
 @enduml
 ```
@@ -87,7 +200,6 @@ in -> error : max_attempts\nreached
 undef : initial state
 undef --> start : start\nrequest
 start : execute bash to check if running
-
 
 @enduml
 ```
