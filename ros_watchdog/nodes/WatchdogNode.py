@@ -6,7 +6,9 @@ import rospy
 import os
 import typing as typ
 
-from watchdog_msgs.msg import SystemStatus, SystemStatusStamped
+from watchdog_msgs.msg import \
+    Status as StatusMsg, \
+    StatusStamped as StatusStampedMsg
 from watchdog_msgs.msg import StatusChangesArray, StatusChangesArrayStamped
 from watchdog_msgs.srv import Start as StartService
 from watchdog_msgs.srv import StartRequest as StartReq
@@ -29,7 +31,7 @@ class WatchdogNode(object):
         self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
         # declare publishers
-        self.pub_status = rospy.Publisher("/watchdog/status", SystemStatusStamped, queue_size=1)
+        self.pub_status = rospy.Publisher("/watchdog/status", StatusStampedMsg, queue_size=1)
         self.pub_log = rospy.Publisher("/watchdog/log", StatusChangesArrayStamped, queue_size=1)
 
         # declare services
@@ -126,7 +128,7 @@ class WatchdogNode(object):
 
     def __publish_status(self):
         # create msg
-        msg = SystemStatusStamped()
+        msg = StatusStampedMsg()
         msg.header.stamp = rospy.get_rostime().now()
         msg.header.frame_id = "ros_watchdog"
         msg.header.seq = self.__cntStatus
@@ -162,9 +164,9 @@ class WatchdogNode(object):
             for obskey, obs in status_changes.items():
 
                 for assetkey, asset_status in obs.items():
-                    status_msg = SystemStatus()
-                    status_msg.id = self.watchdog.get_asset_id(obskey, assetkey)
-                    status_msg.group = obskey.value
+                    status_msg = StatusMsg()
+                    status_msg.entity = self.watchdog.get_asset_id(obskey, assetkey)
+                    status_msg.type = obskey.value
                     status_msg.name = str(assetkey)
                     status_msg.status = asset_status.value
 
@@ -176,9 +178,9 @@ class WatchdogNode(object):
             for obskey, obs in status_current.items():
 
                 for assetkey, asset_status in obs.items():
-                    status_msg = SystemStatus()
-                    status_msg.id = self.watchdog.get_asset_id(obskey, assetkey)
-                    status_msg.group = obskey.value
+                    status_msg = StatusMsg()
+                    status_msg.entity = self.watchdog.get_asset_id(obskey, assetkey)
+                    status_msg.type = obskey.value
                     status_msg.name = str(assetkey)
                     status_msg.status = asset_status.value
 
@@ -200,11 +202,13 @@ class WatchdogNode(object):
     ####################
 
     def __get_status_msg(self,
-                         asset_id=0,
-                         asset_name="global",
+                         asset_id="global",
+                         asset_name="/watchdog/global",
+                         asset_type=StatusMsg.GLOBAL,
                          ):
-        msg = SystemStatus()
-        msg.id = asset_id
+        msg = StatusMsg()
+        msg.entity = asset_id
+        msg.type = asset_type
         msg.name = asset_name
         msg.status, msg.info = self.watchdog.get_status_global()
         return msg

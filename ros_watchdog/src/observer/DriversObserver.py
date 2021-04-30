@@ -15,7 +15,7 @@ class DriverObserver(Observer):
     def __init__(
             self,
             name,                                   # type: str
-            observer_id,                            # type: int
+            entity_id,                              # type: str
             timeout=0.0,                            # type: typ.Union[float, str]
             dirname='',                             # type: str
             check_script='',                        # type: str
@@ -25,7 +25,7 @@ class DriverObserver(Observer):
             ):
 
         # initialize super
-        super(DriverObserver, self).__init__(name, observer_id, float(timeout), verbose)
+        super(DriverObserver, self).__init__(name, entity_id, float(timeout), verbose)
 
         # setup parameters
         self.dirname = dirname
@@ -176,7 +176,7 @@ class DriversObserver(Observers):
             # read configuration:
             self.observers[key] = DriverObserver(
                 name=key,
-                observer_id=self.__cnt_id,
+                entity_id=str(section.get('entity_id', 'undefined')),
                 dirname=self.dirname,
                 check_script=str(section.get('check_script', '')),
                 restart_script=str(section.get('restart_script', '')),

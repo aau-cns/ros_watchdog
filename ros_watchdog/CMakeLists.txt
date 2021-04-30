@@ -5,14 +5,6 @@ find_package(catkin REQUIRED COMPONENTS message_generation std_msgs watchdog_msg
 
 catkin_python_setup()
 
-add_service_files(
-  FILES
-  status.srv
-  wdstart.srv
-  wderror.srv
-#   Service2.srv
-)
-
 generate_messages(
   DEPENDENCIES
   std_msgs

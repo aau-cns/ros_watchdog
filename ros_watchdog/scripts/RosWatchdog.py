@@ -7,7 +7,7 @@ import rospy
 import os
 import typing as typ
 
-from watchdog_msgs.msg import SystemStatus
+from watchdog_msgs.msg import StatusMsg
 from watchdog_msgs.msg import SystemStatusStamped
 from enum import Enum
 
@@ -59,10 +59,10 @@ class RosWatchdog(object):
         self.autonomy_action_req = None
 
         # Set status variables
-        self.status = SystemStatus.UNDEF
+        self.status = StatusMsg.UNDEF
         self.pub_status = rospy.Publisher("/watchdog/status", SystemStatusStamped, queue_size=10)
         self.pub_log = rospy.Publisher("/watchdog/log", SystemStatusStamped, queue_size=10)
-        self.set_status(SystemStatus.HOLD)
+        self.set_status(StatusMsg.HOLD)
 
         # saving variables for status to publish on chagne
         self.__observer_status = {}
@@ -234,36 +234,36 @@ class RosWatchdog(object):
                                severity,    # type: int
                                ):
         # type: (...) -> [int, str]
-        ret_status = SystemStatus.UNDEF
+        ret_status = StatusMsg.UNDEF
         ret_string = "undefined"
 
         if status == ObserverStatus.NOMINAL:
-            ret_status = SystemStatus.NOMINAL
+            ret_status = StatusMsg.NOMINAL
             ret_string = "nominal"
         elif status == ObserverStatus.STARTING:
-            ret_status = SystemStatus.NOMINAL
+            ret_status = StatusMsg.NOMINAL
             ret_string = "starting"
         elif status == ObserverStatus.NONCRITICAL:
-            ret_status = SystemStatus.NONCRITICAL
+            ret_status = StatusMsg.NONCRITICAL
             ret_string = "non-critical"
         elif status == ObserverStatus.ERROR:
             # TODO(scm): this is technically 2^(1+severity)
             # for clarity written in if/else
             if severity == ObserverSeverity.LOW:
-                ret_status = SystemStatus.NONCRITICAL
+                ret_status = StatusMsg.NONCRITICAL
             elif severity == ObserverSeverity.MODERATE:
-                ret_status = SystemStatus.INCONVENIENT
+                ret_status = StatusMsg.INCONVENIENT
             elif severity == ObserverSeverity.HIGH:
-                ret_status = SystemStatus.HOLD
+                ret_status = StatusMsg.HOLD
             elif severity == ObserverSeverity.FATAL:
-                ret_status = SystemStatus.ABORT
+                ret_status = StatusMsg.ABORT
             else:
-                ret_status = SystemStatus.NONCRITICAL
+                ret_status = StatusMsg.NONCRITICAL
                 pass
 
             ret_string = "error"
         elif status == ObserverStatus.UNOBSERVED:
-            ret_status = SystemStatus.UNDEF
+            ret_status = StatusMsg.UNDEF
             ret_string = "unobserved"
             pass
 
@@ -325,10 +325,10 @@ class RosWatchdog(object):
         return msg
 
     def get_status_msg(self):
-        # type: (...) -> SystemStatus
+        # type: (...) -> StatusMsg
         """Returns the system status as a ROS message"""
 
-        msg = SystemStatus()
+        msg = StatusMsg()
         msg.id = 0  # global ID = 0
         msg.name = "global"
         msg.status = self.status
@@ -351,7 +351,7 @@ class RosWatchdog(object):
                 # check for errors
                 if any(val == ObserverStatus.ERROR for key, val in nodes_status.items()) \
                         or any(val == ObserverStatus.ERROR for key, val in sensors_status.items()):
-                    self.set_status(SystemStatus.ABORT)
+                    self.set_status(StatusMsg.ABORT)
                     if self.bVerbose:
                         rospy.logerr("- SystemStatus.ABORT")
                         pass
@@ -360,11 +360,11 @@ class RosWatchdog(object):
                 # check for starting
                 elif any(val == ObserverStatus.STARTING for key, val in nodes_status.items()) \
                         or any(val == ObserverStatus.STARTING for key, val in topics_status.items()):
-                    self.set_status(SystemStatus.HOLD)
+                    self.set_status(StatusMsg.HOLD)
                     if self.bVerbose:
                         rospy.logwarn("- SystemStatus.HOLD")
                 else:
-                    self.set_status(SystemStatus.NOMINAL)
+                    self.set_status(StatusMsg.NOMINAL)
                     if self.bVerbose:
                         rospy.loginfo("- SystemStatus.OK")
                         pass

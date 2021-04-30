@@ -30,18 +30,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made `ros_watchdog` a ROS python package
 - Moved Observer files into observer module in `src/observer`
 - Moved configuration `.ini` files to `watchdog_bringup/config`
+- Updated Watchdog Node with new message definitions for autonomy
 
 ##### watchdog_msgs
 - Renamed `autonomy_msgs` to `watchdog_msgs`
-- Made `watchdog_msgs` a seperate ROS package
+- Made `watchdog_msgs` a separate ROS package
 
 ### Deprecated
+- Launchfiles in `ros_watchdog`
+- Config in `ros_watchdog`
 
 ### Documentation
 
 ### Fixed
 
 ### Removed
+- Old definition of services in `ros_watchdog`
 
 ###
 

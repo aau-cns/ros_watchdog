@@ -37,7 +37,7 @@ class Observer(object):
 
     def __init__(self,
                  name,                              # type: str
-                 id,                                # type: int
+                 entity_id,                         # type: str
                  timeout=0.0,                       # type: float
                  verbose=False,                     # type: bool
                  ):
@@ -46,7 +46,7 @@ class Observer(object):
 
         # setup observer parameters
         self.name = name                            # type: str
-        self.id = id                                # type: int
+        self.entity_id = entity_id                  # type: str
         self.timeout = timeout                      # type: float
 
         # set initial status to unobserved
@@ -101,8 +101,8 @@ class Observer(object):
         return self.severity
 
     def get_id(self):
-        # type: (...) -> int
-        return self.id
+        # type: (...) -> str
+        return self.entity_id
 
     ####################
     # BOOLEANS

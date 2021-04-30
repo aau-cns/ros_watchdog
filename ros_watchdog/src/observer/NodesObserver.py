@@ -49,14 +49,14 @@ class NodeObserver(Observer):
     def __init__(
             self,
             node_name,                      # type: str
-            observer_id,                    # type: int
+            entity_id,                      # type: str
             max_restart_attempts=0,         # type: typ.Union[str, int]
             restart_timeout=0.0,            # type: typ.Union[str, float]
             verbose=True,                   # type: bool
             ):
 
         # initialize super
-        super(NodeObserver, self).__init__(str(node_name), int(observer_id), float(restart_timeout), verbose)
+        super(NodeObserver, self).__init__(str(node_name), entity_id, float(restart_timeout), verbose)
 
         self.num_restarts = 0
         self.max_restart_attempts = int(max_restart_attempts)
@@ -170,7 +170,7 @@ class NodesObserver(object):
                 # read configuration:
                 self.observers[key] = NodeObserver(
                     node_name=key,
-                    observer_id=self.__cnt_id,
+                    entity_id=str(section.get('entity_id', 'undefined')),
                     max_restart_attempts=int(section.get('max_restart_attempts', '0')),
                     restart_timeout=float(section.get('restart_timeout', '0.0')),
                     verbose=self.bVerbose

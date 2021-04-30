@@ -1,5 +1,0 @@
-string                      source
-float64                     startup_time
----
-bool                        successful
-watchdog_msgs/SystemStatus  status

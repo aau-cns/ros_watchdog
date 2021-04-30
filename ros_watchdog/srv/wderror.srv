@@ -1,3 +1,0 @@
-watchdog_msgs/SystemStatus  status
----
-bool                        received

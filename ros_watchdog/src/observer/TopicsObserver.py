@@ -42,7 +42,7 @@ class TopicObserver(Observer):
     def __init__(
             self,
             topic_name,                             # type: str
-            observer_id,                            # type: int
+            entity_id,                              # type: str
             timeout=0.0,                            # type: typ.Union[float, str]
             rate=1,                                 # type: typ.Union[float, str]
             severity=0,                             # type: typ.Union[int, str]
@@ -55,7 +55,7 @@ class TopicObserver(Observer):
             ):
 
         # initialize super
-        super(TopicObserver, self).__init__(topic_name, observer_id, float(timeout), verbose)
+        super(TopicObserver, self).__init__(topic_name, entity_id, float(timeout), verbose)
 
         # set topic values
         self.rate = float(rate)
@@ -231,7 +231,7 @@ class TopicsObserver(Observers):
             # read configuration:
             self.observers[key] = TopicObserver(
                 topic_name=key,
-                observer_id=self.__cnt_id,
+                entity_id=str(section.get('entity_id', 'undefined')),
                 rate=float(section.get('rate', '1.0')),
                 rate_margin=float(section.get('margin', '0.1')),
                 severity=int(section.get('severity', '0')),
