@@ -1,2 +1,2 @@
-watchdog_msgs/SystemStatus[]    changes
-watchdog_msgs/SystemStatus[]    current
+watchdog_msgs/Status[]  changes
+watchdog_msgs/Status[]  current

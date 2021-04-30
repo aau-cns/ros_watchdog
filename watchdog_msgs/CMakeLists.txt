@@ -6,8 +6,10 @@ find_package(catkin REQUIRED COMPONENTS actionlib_msgs message_generation std_ms
 add_message_files(
   DIRECTORY msg
   FILES
-  SystemStatus.msg
-  SystemStatusStamped.msg
+  Action.msg
+  ActionStamped.msg
+  Status.msg
+  StatusStamped.msg
   StatusChangesArray.msg
   StatusChangesArrayStamped.msg
 )

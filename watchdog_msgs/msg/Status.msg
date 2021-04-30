@@ -1,7 +1,12 @@
 # Sensor Information
-uint8               id      # Sensor ID
-uint8               group   # Sensor Group (Topic, Node, Driver, etc)
-string              name    # Sensor Name
+string              entity  # Entity Identifier
+
+# Type Information
+uint8               type    # Sensor Group (Topic, Node, Driver, global)
+uint8 GLOBAL        = 0
+uint8 TOPIC         = 1
+uint8 NODE          = 2
+uint8 DRIVER        = 3
 
 # Status Information
 uint8               status  # Sensor Status (any of the following)
@@ -12,4 +17,5 @@ uint8 DEFECT        = 4     # Inconvenient Failure
 uint8 ERROR         = 8     # Severe Failure
 
 # Debug Information
-string  info
+string              name    # Specific name of sensor (topic/node/driver)
+string              info    # Info on the failure

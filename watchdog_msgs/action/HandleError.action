@@ -12,7 +12,7 @@ uint8   RESTART_DRIVER              = 2
 Header                              header
 uint8                               id
 bool                                successful
-watchdog_msgs/SystemStatus          status
+watchdog_msgs/Status          status
 ---
 # feedback definition
-watchdog_msgs/SystemStatusStamped   status
+watchdog_msgs/StatusStamped   status
