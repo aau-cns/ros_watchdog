@@ -5,7 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
-**BRANCH**: `feat/watchdog_splitting`
+**BRANCH**: `feat/actions`
+### Added
+
+##### watchdog_msgs
+- Added `Action` and `ActionStamped` message definition
+
+### Changed
+- Updated `.gitignore` to include PyCharm, ROS, Python ignores (see https://www.toptal.com/developers/gitignore)
+##### ros_watchdog
+###### Observer
+- Updated `Node(s)Observer` to inherit from `Observer(s)` super class
+
+### Deprecated
+- `SensorObserver.py` was replaced by `DriversObserver.py`. Will be removed in future commit.
+
+**[FEATURE 1]**: `feat/watchdog_splitting` (merged to `develop`)
 ### Added
 - Added `watchdog_bringup` (metapackage for launching)
 
@@ -53,5 +68,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Original Version by @rojung.
 
+[FEATURE 1]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/tree/eef00de426041d7740b41923108a834ad830ad55
 [Unreleased]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/compare/develop...main
 [Original]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/tree/master
