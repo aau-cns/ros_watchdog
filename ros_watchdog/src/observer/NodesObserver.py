@@ -5,17 +5,9 @@
 import rospy
 import os
 import time
-from enum import Enum
-import configparser
 import typing as typ
 
-from observer.Observer import Observer, ObserverStatus, ObserverSeverity
-
-class NodeStatus(Enum):    # RosWatchdog.status
-    OK = 0                    # -> OK
-    STARTING = 1            # -> OK
-    ERROR = 2                 # -> ABORT
-    UNOBSERVED= 3
+from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity
 
 
 def is_ros_node_running(node_name, verbose):
@@ -46,6 +38,7 @@ def kill_ros_node(node_name, verbose):
 
 
 class NodeObserver(Observer):
+
     def __init__(
             self,
             node_name,                      # type: str
@@ -58,62 +51,93 @@ class NodeObserver(Observer):
         # initialize super
         super(NodeObserver, self).__init__(str(node_name), entity_id, float(restart_timeout), verbose)
 
+        # set node values
         self.num_restarts = 0
         self.max_restart_attempts = int(max_restart_attempts)
         self.restart_timeout = float(restart_timeout)
+        self.t0 = -1
+        self.t_running = -1
+
+        # reset
         self.stop_observation()
         pass  # def __init__(...)
 
     def stop_observation(self):
+        self.status = ObserverStatus.UNOBSERVED
         self.t0 = -1
         self.t_running = -1
+        pass
 
     # important for high level logic to define when observation should start!
     def start_observation(self):
+        self.status = ObserverStatus.STARTING
         self.t0 = rospy.get_rostime().now().to_sec()
         self.t_running = self.t0 + self.restart_timeout
+        pass
 
-    def kill_node(self):
+    def update(self):
+        if self.status == ObserverStatus.UNOBSERVED:
+            return
+        else:
+            # TODO(scm): this is the amaze logic, add state for failure which does the node restarting
+            if self.is_running():
+                self.status = ObserverStatus.NOMINAL
+                return
+            else:
+                # TODO(scm) check here if restart attempts exceeded (etc)
+                self.status = ObserverStatus.ERROR
+                return
+            pass
+        pass  # def update()
+
+    def act(self):
+        self._restart_node()
+        pass  # def act()
+
+    def _kill_node(self):
         return kill_ros_node(self.get_name(), self.do_verbose())
 
-    def restart_node(self):
+    def _restart_node(self):
 
         if self.num_restarts < self.max_restart_attempts:
             if self.do_verbose():
                 rospy.loginfo("-- drivers node [" + self.name + "]")
 
             self.num_restarts += 1
-            if self.kill_node():
+            if self._kill_node():
                 self.start_observation()
                 return True
             else:
                 return False
         elif self.num_restarts >= self.max_restart_attempts:
             self.num_restarts += 1
-            rospy.logwarn("-- node [" + self.name + "] exceeded drivers attempts!")
+            rospy.logwarn("-- node [" + self.name + "] exceeded restart attempts!")
 
         return False
 
     def is_running(self):
         return is_ros_node_running(self.get_name(), self.do_verbose())
 
-    def get_status(self):
-        if self.t_running < 0 or self.t0 < 0:
-            return ObserverStatus.UNOBSERVED
-
-        if self.num_restarts > self.max_restart_attempts:
-            return ObserverStatus.ERROR
-
-        if not self.is_running():
-            if not self.restart_node():
-                return ObserverStatus.ERROR
-
-        t_curr = rospy.get_rostime().now().to_sec()
-        if self.t_running > t_curr:
-            return ObserverStatus.STARTING  # all related TopicObserver need to drivers their observation! as long as the node is restarting
-
-        return ObserverStatus.NOMINAL
-        # return self.status
+    # OLD LOGIC
+    # def update(self):
+    #     if self.t_running < 0 or self.t0 < 0:
+    #         self.status = ObserverStatus.UNOBSERVED
+    #         return
+    #
+    #     if self.num_restarts > self.max_restart_attempts:
+    #         self.status = ObserverStatus.ERROR
+    #         return
+    #
+    #     if not self.is_running():
+    #         if not self.restart_node():
+    #             return ObserverStatus.ERROR
+    #
+    #     t_curr = rospy.get_rostime().now().to_sec()
+    #     if self.t_running > t_curr:
+    #         return ObserverStatus.STARTING  # all related TopicObserver need to drivers their observation! as long as the node is restarting
+    #
+    #     return ObserverStatus.NOMINAL
+    #     pass  # def update()
 
     # def update_status(self):
     #     # check if node observer was started
@@ -143,68 +167,70 @@ class NodeObserver(Observer):
     #     pass
 
 
+class NodesObserver(Observers):
 
-
-class NodesObserver(object):
-    def __init__(self, nodes_cfg_file, verbose=True, use_startup_to=True):
-        assert(os.path.exists(nodes_cfg_file))
-        self.bVerbose = verbose
+    def __init__(self,
+                 cfg_file,                          # type: str
+                 verbose=True,                      # type: bool
+                 use_startup_to=True,               # type: bool
+                 ):
+        # call super constructor
+        super(NodesObserver, self).__init__(
+            cfg_file=cfg_file,
+            verbose=verbose,
+            name="NodesObserver"
+        )
 
         # setup ID counter
         self.__cnt_id = 1   # always start with 1, 0 --> global
 
-        self.observers = {}
-        config = configparser.ConfigParser()
-        config.sections()
-        config.read(nodes_cfg_file)
-        self.items = config.items()
-
-        # the first element is default section!
-        if len(self.items) < 2:
-            rospy.logerr("ERROR: no node objects in " + str(nodes_cfg_file))
-
-        for key, section in self.items:
-            if key != 'DEFAULT':
-                if self.bVerbose:
-                    print(key)
-                # read configuration:
-                self.observers[key] = NodeObserver(
-                    node_name=key,
-                    entity_id=str(section.get('entity_id', 'undefined')),
-                    max_restart_attempts=int(section.get('max_restart_attempts', '0')),
-                    restart_timeout=float(section.get('restart_timeout', '0.0')),
-                    verbose=self.bVerbose
-                )
-
-                self.__cnt_id += 1
+        for key, section in self.config_dict.items():
+            # debugging
+            if self.do_verbose():
+                rospy.loginfo("Adding topic %s" % str(key))
                 pass
-            pass
-        pass
 
-    def exists(self, node_name):
-        return self.observers.has_key(node_name)
+            # read configuration:
+            self.observers[key] = NodeObserver(
+                node_name=key,
+                entity_id=str(section.get('entity_id', 'undefined')),
+                max_restart_attempts=int(section.get('max_restart_attempts', '0')),
+                restart_timeout=float(section.get('restart_timeout', '0.0')),
+                verbose=verbose,
+            )
 
-    def start_observation(self):
-        for key, val in self.observers.items():
-            val.start_observation()
+            self.__cnt_id += 1
+            pass  # for key, section in self.config_dict.items()
 
-    def stop_observation(self):
-        for key, val in self.observers.items():
-            val.stop_observation()
+        pass  # def __init__(...)
 
-    def get_status(self):
-        status = {}
-        for key, val in self.observers.items():
-            status[key] = val.get_status()
+    # def exists(self, node_name):
+    #     return self.observers.has_key(node_name)
+    #
+    # def start_observation(self):
+    #     for key, val in self.observers.items():
+    #         val.start_observation()
+    #
+    # def stop_observation(self):
+    #     for key, val in self.observers.items():
+    #         val.stop_observation()
+    #
+    # def get_status(self):
+    #     status = {}
+    #     for key, val in self.observers.items():
+    #         status[key] = val.get_status()
+    #
+    #     return status
+    #
+    # def get_observers(self):
+    #     return self.observers
+    #
+    # def print_status(self):
+    #     for name, status in self.get_status().items():
+    #         print("- node:   [" + str(name) + "]:" + str(status.name))
 
-        return status
+    pass  # class NodesObservers(...)
 
-    def get_observers(self):
-        return self.observers
-
-    def print_status(self):
-        for name, status in self.get_status().items():
-            print("- node:   [" + str(name) + "]:" + str(status.name))
 
 if __name__ == '__main__':
 

@@ -9,6 +9,8 @@ import typing as typ
 from watchdog_msgs.msg import \
     Status as StatusMsg, \
     StatusStamped as StatusStampedMsg
+from watchdog_msgs.msg import \
+    ActionStamped as ActionStampedMsg
 from watchdog_msgs.msg import StatusChangesArray, StatusChangesArrayStamped
 from watchdog_msgs.srv import Start as StartService
 from watchdog_msgs.srv import StartRequest as StartReq
@@ -26,13 +28,16 @@ class WatchdogNode(object):
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
         self.drivers_cfg_file = rospy.get_param("~drivers_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
-        self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
+        self.topic_check_rate = rospy.get_param("/autonomy/watchdog_rate", 1.0)
         self.bVerbose = rospy.get_param("~bVerbose", True)
         self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
         # declare publishers
         self.pub_status = rospy.Publisher("/watchdog/status", StatusStampedMsg, queue_size=1)
         self.pub_log = rospy.Publisher("/watchdog/log", StatusChangesArrayStamped, queue_size=1)
+
+        # declare subscriber
+        self.sub_action = rospy.Subscriber("/watchdog/action", ActionStampedMsg, self.action_callback)
 
         # declare services
         self.start_srv = rospy.Service(
@@ -50,6 +55,7 @@ class WatchdogNode(object):
         pass  # def __init__
 
     def run(self):
+        rospy.logwarn("Setting watchdog rate to %f" % (self.topic_check_rate))
         rate = rospy.Rate(self.topic_check_rate)
         cnt = 0
 
@@ -73,7 +79,7 @@ class WatchdogNode(object):
                 pass
             elif wd_state == Watchdog.States.STARTING:
                 # set publish hb
-                do_pub_hb = True
+                do_pub_hb = False
                 pass
             else:
                 pass
@@ -124,6 +130,11 @@ class WatchdogNode(object):
         res.successful = True if res.status.status == 1 else False
 
         return res
+        pass
+
+    def action_callback(self,
+                        data,
+                        ):
         pass
 
     def __publish_status(self):

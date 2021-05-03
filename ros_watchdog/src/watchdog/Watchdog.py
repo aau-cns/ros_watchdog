@@ -229,7 +229,7 @@ class Watchdog(object):
                      asset_key,
                      ):
         if observers_key == Watchdog.ObserverKeys.GLOBAL:
-            return 0
+            return "global"
         else:
             return self.__observers[observers_key].get_observer_id(key=asset_key)
         pass  # def get_asset_id(...)

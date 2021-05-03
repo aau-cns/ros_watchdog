@@ -19,7 +19,16 @@ class ObserverStatus(OrderedEnum):
     STARTING = 2            # -> NOMINAL
     NONCRITICAL = 4         # -> NON CRITICAL (message rate)
     ERROR = 8               # -> FAIL (depending on severity)
-    pass  # class ObserverStatus
+    pass  # enum ObserverStatus
+
+
+@unique
+class ObserverAction(OrderedEnum):
+    NOTHING = 0
+    RESTART_NODE = 1
+    RESTART_DRIVER = 2
+    KILL_NODE = 4
+    pass  # enum ObserverAction
 
 
 @unique

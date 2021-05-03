@@ -47,10 +47,10 @@ class TopicObserver(Observer):
             rate=1,                                 # type: typ.Union[float, str]
             severity=0,                             # type: typ.Union[int, str]
             watchdog_action=0,                      # type: typ.Union[int, str]
-            sensor_name='',
-            node_name='',
-            window_size=10,
-            rate_margin=0.1,
+            driver_name='',                         # type: str
+            node_name='',                           # type: str
+            window_size=10,                         # type: int
+            rate_margin=0.1,                        # type: typ.Union[float, str]
             verbose=True,                           # type: bool
             ):
 
@@ -61,7 +61,7 @@ class TopicObserver(Observer):
         self.rate = float(rate)
         self.severity = int(severity)
         self.action = int(watchdog_action)
-        self.sensor_name = sensor_name
+        self.sensor_name = driver_name
         self.node_name = node_name
         self.timeout = float(timeout)
         self.window_size = int(window_size)
@@ -70,8 +70,10 @@ class TopicObserver(Observer):
             pass
 
         # set rate boundaries
+        rate_margin = float(rate_margin)
         if not 0 < rate_margin <= 1:
-            rospy.logwarn("Rate margin has to be between 0 and 1 (0-100%). Using standard of 0.1")
+            rospy.logwarn("Rate margin has to be between 0 and 1 (0-100%). "
+                          "Using standard value of 0.1 (10% of expected rate).")
             rate_margin = 0.1
             pass
         self.__rate_margin = rate_margin * self.rate
@@ -103,43 +105,6 @@ class TopicObserver(Observer):
         self.status = ObserverStatus.STARTING
         self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz)
         pass
-
-    def get_times(self):
-        return self.times
-
-    def set_times(self, value):
-        self.times = value
-
-    def callback_hz(self, data):
-        """
-        ros sub callback
-        """
-        curr = rospy.get_rostime().to_sec()
-
-        if self.msg_tn < 0 or self.msg_t0 < 0:
-            self.msg_t0 = curr
-            self.msg_tn = curr
-            self.times = []
-        else:
-            self.times.append(curr - self.msg_tn)
-            self.msg_tn = curr
-        if len(self.times) > self.window_size - 1:
-            self.times.pop(0)
-
-    def get_hz(self):
-        n = len(self.times)
-        # rate = (n - 1) / (rospy.get_time() - self.msg_t0)
-        mean = sum(self.times) / n if n > 0 else 0
-        rate = 1. / mean if mean > 0.0 else 0
-
-        # std dev
-        std_dev = math.sqrt(sum((x - mean) ** 2 for x in self.times) / n) if n > 0 else 0
-
-        # min and max
-        max_delta = max(self.times) if n > 0 else 0
-        min_delta = min(self.times) if n > 0 else 0
-
-        return rate, mean, std_dev, max_delta, min_delta
 
     def update(self):
         if self.status == ObserverStatus.UNOBSERVED:
@@ -192,13 +157,56 @@ class TopicObserver(Observer):
             self.status = ObserverStatus.NOMINAL
             return
 
-        pass  # def get_status()
+        pass  # def update()
+
+    def act(self):
+        pass  # def act()
+
+    def get_times(self):
+        return self.times
+
+    def set_times(self, value):
+        self.times = value
+
+    def callback_hz(self, data):
+        """
+        ros sub callback
+        """
+        curr = rospy.get_rostime().to_sec()
+
+        if self.msg_tn < 0 or self.msg_t0 < 0:
+            self.msg_t0 = curr
+            self.msg_tn = curr
+            self.times = []
+        else:
+            self.times.append(curr - self.msg_tn)
+            self.msg_tn = curr
+        if len(self.times) > self.window_size - 1:
+            self.times.pop(0)
+
+    def get_hz(self):
+        n = len(self.times)
+        # rate = (n - 1) / (rospy.get_time() - self.msg_t0)
+        mean = sum(self.times) / n if n > 0 else 0
+        rate = 1. / mean if mean > 0.0 else 0
+
+        # std dev
+        std_dev = math.sqrt(sum((x - mean) ** 2 for x in self.times) / n) if n > 0 else 0
+
+        # min and max
+        max_delta = max(self.times) if n > 0 else 0
+        min_delta = min(self.times) if n > 0 else 0
+
+        return rate, mean, std_dev, max_delta, min_delta
 
     def get_severity(self):
         return self.severity
 
     def get_action(self):
         return self.action
+
+    pass  # class TopicObserver(...)
+
 
 class TopicsObserver(Observers):
     """Node example class."""
@@ -237,7 +245,7 @@ class TopicsObserver(Observers):
                 severity=int(section.get('severity', '0')),
                 watchdog_action=int(section.get('watchdog_action', '0')),
                 timeout=timeout,
-                sensor_name=str(section.get('sensor_name', '')),
+                driver_name=str(section.get('sensor_name', '')),
                 node_name=str(section.get('node_name', '')),
                 verbose=verbose,
             )
