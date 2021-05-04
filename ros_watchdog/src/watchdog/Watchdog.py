@@ -88,7 +88,7 @@ class Watchdog(object):
         pass  # def init
 
     def start(self,
-              timeout_,                         # type: float
+              timeout_,                             # type: float
               ):
         # set starting state
         self.__state = Watchdog.States.STARTING
@@ -118,7 +118,7 @@ class Watchdog(object):
 
     def act(self,
             observer_key,
-            asset_key,
+            entity_key,
             action_type,
             ):
         # (...) -> None
@@ -130,6 +130,11 @@ class Watchdog(object):
 
     def stop(self):
         pass  # def stop
+
+    def __act_restart_node(self,
+                           ):
+
+        pass
 
     ####################
     # GETTER

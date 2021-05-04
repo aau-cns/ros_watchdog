@@ -10,6 +10,7 @@ from watchdog_msgs.msg import \
     Status as StatusMsg, \
     StatusStamped as StatusStampedMsg
 from watchdog_msgs.msg import \
+    Action as ActionMsg, \
     ActionStamped as ActionStampedMsg
 from watchdog_msgs.msg import StatusChangesArray, StatusChangesArrayStamped
 from watchdog_msgs.srv import Start as StartService
@@ -110,6 +111,7 @@ class WatchdogNode(object):
         # initialize watchdog
         config_files = {
             Watchdog.ObserverKeys.TOPIC: self.topics_cfg_file,
+            Watchdog.ObserverKeys.NODE: self.nodes_cfg_file,
             Watchdog.ObserverKeys.DRIVER: self.drivers_cfg_file,
         }
         self.watchdog.init(config_files)
@@ -133,9 +135,34 @@ class WatchdogNode(object):
         pass
 
     def action_callback(self,
-                        data,
+                        data,           # type: ActionStampedMsg
                         ):
-        pass
+        if data.action.action == ActionMsg.NOTHING:
+            rospy.loginfo("Requested action %d -- doing nothing" % data.action.action)
+            pass
+        else:
+            # debug
+            if self.bVerbose:
+                if data.action.action == ActionMsg.RESTART_NODE:
+                    rospy.loginfo("[ACTION] restarting node of %s" % data.action.entity.entity)
+                elif data.action.action == ActionMsg.RESTART_DRIVER:
+                    rospy.loginfo("[ACTION] restarting driver of %s" % data.action.entity.entity)
+                elif data.action.action == ActionMsg.KILL_NODE:
+                    rospy.loginfo("[ACTION] killing node of %s" % data.action.entity.entity)
+                else:
+                    rospy.loginfo("[ACTION] unknown action %d -- doing nothing for %s"
+                                  % (data.action.action, data.action.entity.entity))
+                    return
+                pass  # if self.bVerbose
+
+            # perform watchdog action
+            self.watchdog.act(observer_key=data.action.entity.type,
+                              entity_key=data.action.entity.name,
+                              action_type=data.action.action,
+                              )
+
+            pass  # if/else data.action.action == ActionMsg.NOTHING
+        pass  # def action_callback(...)
 
     def __publish_status(self):
         # create msg

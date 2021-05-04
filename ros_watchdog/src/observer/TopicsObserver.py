@@ -197,6 +197,10 @@ class TopicObserver(Observer):
         max_delta = max(self.times) if n > 0 else 0
         min_delta = min(self.times) if n > 0 else 0
 
+        # FIX(scm): no new messages, yet rated state the same (had to clear the times vec)
+        # clear times array to account for no new messages (after X sec)
+        self.times = []
+
         return rate, mean, std_dev, max_delta, min_delta
 
     def get_severity(self):

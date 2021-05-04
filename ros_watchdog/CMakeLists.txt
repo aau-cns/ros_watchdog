@@ -19,11 +19,6 @@ include_directories(
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
-#  scripts/AssetObserver.py
-#  scripts/NodesObserver.py
-#  scripts/TopicsObserver.py
-#  scripts/AssetObserver.py
-#  scripts/ObserverHandler.py
   scripts/RosWatchdog.py
   nodes/WatchdogNode.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
