@@ -6,7 +6,7 @@ import os
 import typing as typ
 from enum import Enum, unique
 
-from observer.Observer import Observer, Observers, ObserverStatus
+from observer.Observer import Observer, Observers, ObserverStatus, ObserverAction
 from observer.TopicsObserver import TopicsObserver
 from observer.NodesObserver import NodesObserver
 from observer.DriversObserver import DriversObserver
@@ -124,7 +124,101 @@ class Watchdog(object):
         # (...) -> None
         """performs action for asset in any observer"""
 
-        # TODO(scm): depending on interface
+        # check if action is to do nothing
+        if action_type == ObserverAction.NOTHING:
+            return
+
+        # convert observer key and check if in range
+        observer_key = Watchdog.ObserverKeys(observer_key)
+        if Watchdog.ObserverKeys.DRIVER.GLOBAL < observer_key <= Watchdog.ObserverKeys.DRIVER:
+            rospy.logerr("Observer type not implemented %s" % observer_key)
+            return
+
+        # Get observer of entity
+        obs_list = self.__observers[observer_key].get_observers_with_id(entity_key)
+
+        # check number of observers
+        if len(obs_list) > 1:
+            rospy.logwarn("Have multiple observers (type: %s) for entity %s\n\t"
+                          "performing action for all of them" %
+                          (observer_key, str(entity_key)))
+            pass
+        elif len(obs_list) == 0:
+            rospy.logerr("Do not have any observers (type: %s) for entity %s\n"
+                         "\tCannot perform any action" %
+                         (observer_key, str(entity_key)))
+            # TODO(scm): try to still perform action here by setting up new observer or similar
+            pass
+
+        # perform action for all observer entities
+        for obs in obs_list:
+            # in case of obs=topic, type=restart node/restart driver
+            # we need knowledge of the node/driver
+            # we need to stop observation for node/and driver
+
+            # decide on action depending on obs key
+            if observer_key == Watchdog.ObserverKeys.TOPIC:
+                # get node and driver (if needed)
+                node = self.__observers[Watchdog.ObserverKeys.NODE].get_observer_with_name(obs.node_name)
+                driver = self.__observers[Watchdog.ObserverKeys.DRIVER].get_observer_with_name(obs.driver_name)
+
+                # check if node exists
+                if action_type >= ObserverAction.RESTART_NODE:
+                    obs.stop_observation()
+                    node.stop_observation()
+
+                    # check for all actions to perform
+                    if action_type == ObserverAction.RESTART_DRIVER:
+                        # in case driver should be restarted
+                        driver.stop_observation()
+                        driver.act(action_type=action_type)
+                        driver.start_observation()
+                    else:
+                        # otherwise perform node actions
+                        node.act(action_type=action_type)
+                        pass
+
+                    # restart observations (= reset)
+                    node.start_observation()
+                    obs.start_observation()
+                pass
+
+            elif observer_key == Watchdog.ObserverKeys.NODE:
+                driver = self.__observers[Watchdog.ObserverKeys.DRIVER].get_observer_with_name(obs.driver_name)
+
+                # check if action should be performed
+                if action_type >= ObserverAction.RESTART_NODE:
+                    obs.stop_observation()
+
+                    # check for all actions to perform
+                    if action_type == ObserverAction.RESTART_DRIVER:
+                        # in case driver should be restarted
+                        driver.stop_observation()
+                        driver.act(action_type=action_type)
+                        driver.start_observation()
+                    else:
+                        # otherwise perform node actions
+                        obs.act(action_type=action_type)
+                        pass
+
+                    # restart observations (= reset)
+                    obs.start_observation()
+                pass
+
+            elif observer_key == Watchdog.ObserverKeys.DRIVER:
+                # check if action to perform is correct (driver only has information about itself)
+                if action_type == ObserverAction.RESTART_DRIVER:
+                    # in case driver should be restarted
+                    obs.stop_observation()
+                    obs.act(action_type=action_type)
+                    obs.start_observation()
+                    pass
+                pass
+            else:
+                # not implemented
+                pass
+
+            pass  # for obs in obs_list
 
         pass  # def act()
 
@@ -133,6 +227,7 @@ class Watchdog(object):
 
     def __act_restart_node(self,
                            ):
+
 
         pass
 

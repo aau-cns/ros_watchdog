@@ -61,7 +61,7 @@ class TopicObserver(Observer):
         self.rate = float(rate)
         self.severity = int(severity)
         self.action = int(watchdog_action)
-        self.sensor_name = driver_name
+        self.driver_name = driver_name
         self.node_name = node_name
         self.timeout = float(timeout)
         self.window_size = int(window_size)
@@ -159,7 +159,7 @@ class TopicObserver(Observer):
 
         pass  # def update()
 
-    def act(self):
+    def act(self, **kwargs):
         pass  # def act()
 
     def get_times(self):

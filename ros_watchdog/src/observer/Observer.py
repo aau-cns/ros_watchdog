@@ -83,7 +83,9 @@ class Observer(object):
         """Updates the status of the observer"""
         pass
 
-    def act(self):
+    def act(self,
+            action_type=ObserverAction.NOTHING,     # type: ObserverAction
+            ):
         pass
 
     ####################
@@ -261,6 +263,34 @@ class Observers(object):
 
     def get_status_changes(self):
         return self.status_changes
+
+    def get_observer_with_name(self, name):
+        # type: (...) -> typ.Optional[Observer]
+        """returns the observer with the key name"""
+        if self.exists(name):
+            return self.observers[name]
+        else:
+            return None
+        pass  # def get_observer_with_id(...)
+
+    def get_observers_with_id(self, entity_id):
+        # type: (...) -> typ.List[Observer]
+        obs_list = []
+        for key, obs in self.observers.items():
+            if obs.get_id() == entity_id:
+                obs_list.append(obs)
+                pass  # if obs.get_id() == entity_id
+            pass  # for key, obs in self.observers.items()
+
+        if self.do_verbose():
+            if len(obs_list) == 0:
+                rospy.logwarn("%s == entity %s not found in observers" %
+                              (self.get_name(), str(entity_id)))
+                pass
+            pass  # if self.do_verbose()
+
+        return obs_list
+        pass  # def get_observer_with_id(...)
 
     def get_observers(self):
         return self.observers

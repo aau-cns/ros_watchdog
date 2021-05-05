@@ -7,7 +7,7 @@ import os
 import subprocess
 import typing as typ
 
-from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity
+from observer.Observer import Observer, Observers, ObserverStatus, ObserverAction
 
 
 class DriverObserver(Observer):
@@ -52,17 +52,26 @@ class DriverObserver(Observer):
         # start observation and call
         self.status = ObserverStatus.STARTING
 
-        pass
+        pass  # def start_observation()
 
     def stop_observation(self):
         self.__cnt_restarts = 0
         self.status = ObserverStatus.UNOBSERVED
-        pass
+        pass  # def stop_observation()
 
-    def act(self):
-        # perform a drivers
+    def act(self, **kwargs):
+        # if action_type == ObserverAction.RESTART_DRIVER:
+        #     # perform a drivers
+        #     self._restart()
+        #     pass
+        # else:
+        #     if self.do_verbose():
+        #         rospy.logwarn("* [%s] action %s not implemented" %
+        #                       (self.get_name(), str(action_type)))
+        #         pass  # debug
+        #     pass  # if action_type == ObserverAction.RESTART_DRIVER
         self._restart()
-        pass
+        pass  # def act(...)
 
     def update(self):
         # type: (...) -> ObserverStatus

@@ -111,7 +111,7 @@ class SensorsObserver(object):
                 topic = self.topics_obs.observers[topic_name]
                 action = TopicActions(topic.action)
                 node_name = topic.node_name
-                sensor_name = topic.sensor_name
+                sensor_name = topic.driver_name
 
                 if self.bVerbose:
                     print("*  [" + str(topic_name) + "]: ERROR.. ")

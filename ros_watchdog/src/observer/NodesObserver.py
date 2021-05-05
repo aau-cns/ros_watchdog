@@ -45,6 +45,7 @@ class NodeObserver(Observer):
             entity_id,                      # type: str
             max_restart_attempts=0,         # type: typ.Union[str, int]
             restart_timeout=0.0,            # type: typ.Union[str, float]
+            driver_name="",                 # type: str
             verbose=True,                   # type: bool
             ):
 
@@ -55,6 +56,7 @@ class NodeObserver(Observer):
         self.num_restarts = 0
         self.max_restart_attempts = int(max_restart_attempts)
         self.restart_timeout = float(restart_timeout)
+        self.driver_name = str(driver_name)
         self.t0 = -1
         self.t_running = -1
 
