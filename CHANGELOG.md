@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [UNRELEASED]
 **BRANCH**: `feat/actions`
 ### Added
+##### watchdog_bringup
+- Scripts to restart realsense HUB (WIP).
 
 ##### watchdog_msgs
 - Added `Action` and `ActionStamped` message definition
