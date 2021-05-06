@@ -249,7 +249,7 @@ class TopicsObserver(Observers):
                 severity=int(section.get('severity', '0')),
                 watchdog_action=int(section.get('watchdog_action', '0')),
                 timeout=timeout,
-                driver_name=str(section.get('sensor_name', '')),
+                driver_name=str(section.get('driver_name', '')),
                 node_name=str(section.get('node_name', '')),
                 verbose=verbose,
             )

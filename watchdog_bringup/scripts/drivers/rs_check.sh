@@ -16,7 +16,7 @@ echo "[BASH - RS] checking sensor - Realsense"
 
 # check if device is found in lsusb
 RS_ID="8087:0b37"
-RS_STATUS="$(ssh core@192.168.0.195 'lsusb' | grep ${RS_ID})"
+RS_STATUS="$(ssh core@10.42.0.102 'lsusb' | grep ${RS_ID})"
 echo "[BASH - RS] status: ${RS_STATUS}"
 
 case $RS_STATUS in

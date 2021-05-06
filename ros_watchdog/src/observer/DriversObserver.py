@@ -34,8 +34,16 @@ class DriverObserver(Observer):
         self.restart_attempts = int(restart_attempts)
 
         # setup files
-        self.check_script_file = file = os.path.join(self.dirname, self.check_script)
-        self.restart_script_file = file = os.path.join(self.dirname, self.restart_script)
+        if self.restart_script.startswith("/"):
+            self.check_script_file = self.check_script
+        else:
+            self.check_script_file = os.path.join(self.dirname, self.check_script)
+            pass
+        if self.restart_script.startswith("/"):
+            self.restart_script_file = self.restart_script
+        else:
+            self.restart_script_file = os.path.join(self.dirname, self.restart_script)
+            pass
 
         # setup counters
         self.__cnt_restarts = 0
