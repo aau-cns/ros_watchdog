@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [UNRELEASED]
+**BRANCH**: `test/autonomy_2105XX`
+### Fixed
+##### ros_watchdog
+###### DriversObserver
+- Script callback would yield intro wrong return value.
+###### NodesObserver
+- System call takes a long time to execute, use `rosnode` module instead.
+
 **BRANCH**: `feat/actions`
 ### Added
 ##### watchdog_bringup

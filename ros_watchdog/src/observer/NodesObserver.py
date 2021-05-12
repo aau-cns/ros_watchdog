@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Import required Python code.
-import rospy
+import rospy, rosnode
 import os
 import time
 import typing as typ
@@ -11,14 +11,15 @@ from observer.Observer import Observer, Observers, ObserverStatus, ObserverSever
 
 
 def is_ros_node_running(node_name, verbose):
-    nodes = os.popen("rosnode list").readlines()
-    for i in range(len(nodes)):
-        nodes[i] = nodes[i].replace("\n", "")
+    # nodes = os.popen("rosnode list").readlines()
+    nodes_list = rosnode.get_node_names()
 
+    # debug info
     if verbose:
-        rospy.loginfo("existing nodes: " + str(nodes))
+        rospy.logdebug("existing nodes: " + str(nodes_list))
+        pass
 
-    if any(x == node_name for x in nodes):
+    if node_name in nodes_list:
         return True
     else:
         return False
@@ -28,8 +29,10 @@ def kill_ros_node(node_name, verbose):
     if is_ros_node_running(node_name, verbose):
         if verbose:
             rospy.loginfo("-- rosnode kill " + node_name)
+            pass
 
-        os.system("rosnode kill " + node_name)
+        # os.system("rosnode kill " + node_name)
+        rosnode.kill_nodes([node_name])
         return True
     else:
         rospy.logwarn("-- node [" + node_name + "] is not running!")

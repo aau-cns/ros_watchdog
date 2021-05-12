@@ -87,7 +87,7 @@ class DriverObserver(Observer):
 
         # debug
         if self.do_verbose():
-            rospy.loginfo("* [%s] updating status - current %s" % (self.get_name(), self.status))
+            print("* [%s] updating status - current %s" % (self.get_name(), self.status))
             pass
 
         # check if observation is running
@@ -101,8 +101,8 @@ class DriverObserver(Observer):
         if is_running:
             self.status = ObserverStatus.NOMINAL
             if self.do_verbose():
-                rospy.loginfo("* [%s] driver IS running" % self.get_name())
-                rospy.loginfo("* - status: %s" % self.status)
+                rospy.loginfo("*  -  [%s] driver IS running" % self.get_name())
+                rospy.loginfo("*  -  status: %s" % self.status)
                 pass
             pass
         else:
@@ -110,8 +110,8 @@ class DriverObserver(Observer):
             if self.status == ObserverStatus.STARTING and self.__cnt_restarts < self.restart_attempts:
                 # perform drivers if we are in starting phase and have not reached max_restart attempts
                 if self.do_verbose():
-                    rospy.loginfo("* [%s] driver still starting" % self.get_name())
-                    rospy.loginfo("* - status: %s" % self.status)
+                    rospy.loginfo("*  -  [%s] driver still starting" % self.get_name())
+                    rospy.loginfo("*  -  status: %s" % self.status)
                     pass
                 self.act()
                 pass
@@ -119,8 +119,8 @@ class DriverObserver(Observer):
                 # enter error state
                 self.status = ObserverStatus.ERROR
                 if self.do_verbose():
-                    rospy.loginfo("* [%s] driver NOT running" % self.get_name())
-                    rospy.loginfo("* - status: %s" % self.status)
+                    rospy.loginfo("*  -  [%s] driver NOT running" % self.get_name())
+                    rospy.loginfo("*  -  status: %s" % self.status)
                     pass
                 pass  # f self.status == ObserverStatus.STARTING and self.__cnt_restarts < self.restart_attempts
             pass  # (if)else is_running
