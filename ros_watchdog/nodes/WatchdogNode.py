@@ -72,9 +72,6 @@ class WatchdogNode(object):
                 # do watching
                 self.watchdog.watch()
 
-                # publish changes
-                self.__publish_changes()
-
                 # set publish hb
                 do_pub_hb = True
                 pass
@@ -88,6 +85,12 @@ class WatchdogNode(object):
             # publish heartbeat status message
             if do_pub_hb:
                 self.__publish_status()
+
+
+                # TODO(scm): this status is only the delta to the last watch call,
+                # make this
+                # publish changes
+                self.__publish_changes()
                 pass
 
             # sleep remainder of rate
@@ -129,7 +132,7 @@ class WatchdogNode(object):
         res.header.frame_id = "ros_watchdog"
 
         res.status = self.__get_status_msg()
-        res.successful = True if res.status.status == 1 else False
+        res.successful = True if res.status.status == 1 or res.status.status == 4 else False
 
         return res
         pass
@@ -240,7 +243,7 @@ class WatchdogNode(object):
     ####################
 
     def __get_status_msg(self,
-                         asset_id="global",
+                         asset_id="",
                          asset_name="/watchdog/global",
                          asset_type=StatusMsg.GLOBAL,
                          ):
@@ -248,7 +251,7 @@ class WatchdogNode(object):
         msg.entity = asset_id
         msg.type = asset_type
         msg.name = asset_name
-        msg.status, msg.info = self.watchdog.get_status_global()
+        msg.status, msg.info = self.watchdog.get_status_global(as_int=True)
         return msg
         pass
 

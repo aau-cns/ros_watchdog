@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import rospy
-import os
 import typing as typ
-from enum import Enum, unique
+from enum import unique
 
 from observer.Observer import Observer, Observers, ObserverStatus, ObserverAction
 from observer.TopicsObserver import TopicsObserver
@@ -72,7 +71,7 @@ class Watchdog(object):
                 observer = TopicsObserver(cfg_file, verbose=self.__bVerbose)
                 pass
             elif ckey == Watchdog.ObserverKeys.NODE:
-                # observer = NodesObserver(cfg_file, verbose=self.__bVerbose)
+                observer = NodesObserver(cfg_file, verbose=self.__bVerbose)
                 pass
             elif ckey == Watchdog.ObserverKeys.DRIVER:
                 observer = DriversObserver(cfg_file, verbose=self.__bVerbose)
@@ -295,7 +294,7 @@ class Watchdog(object):
     def get_status_all(self):
         statuses = {}
         statuses[Watchdog.ObserverKeys.GLOBAL] = \
-            {"global": self.get_status_global(as_int=False, with_info=False)}
+            {"": self.get_status_global(as_int=False, with_info=False)}
 
         # check for current state of WD
         if self.__state == Watchdog.States.RUNNING:

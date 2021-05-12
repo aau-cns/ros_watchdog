@@ -32,5 +32,10 @@ case $RS_STATUS in
     ;;
 esac
 
+# TODO(scm): perform rs-enumerate-devices <<EOF
+#decades@ubuntu:~$ rs-enumerate-devices
+#No device detected. Is it plugged in?
+#https://github.com/IntelRealSense/librealsense/issues/4916
+
 # in case something went wrong
 exit 1

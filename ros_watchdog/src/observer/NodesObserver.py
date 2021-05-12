@@ -79,15 +79,24 @@ class NodeObserver(Observer):
 
     def update(self):
         if self.status == ObserverStatus.UNOBSERVED:
+            if self.do_verbose():
+                print("*  [" + self.name + "] not observing...")
+                pass
             return
         else:
             # TODO(scm): this is the amaze logic, add state for failure which does the node restarting
             if self.is_running():
                 self.status = ObserverStatus.NOMINAL
+                if self.do_verbose():
+                    print("*  [" + self.name + "] running")
+                    pass
                 return
             else:
                 # TODO(scm) check here if restart attempts exceeded (etc)
                 self.status = ObserverStatus.ERROR
+                if self.do_verbose():
+                    print("*  [" + self.name + "] not running")
+                    pass
                 return
             pass
         pass  # def update()
@@ -189,7 +198,7 @@ class NodesObserver(Observers):
         for key, section in self.config_dict.items():
             # debugging
             if self.do_verbose():
-                rospy.loginfo("Adding topic %s" % str(key))
+                rospy.loginfo("Adding node %s" % str(key))
                 pass
 
             # read configuration:

@@ -137,7 +137,12 @@ class DriverObserver(Observer):
             rospy.loginfo("* [%s] checking status - file %s" % (self.get_name(), str(self.check_script_file)))
             pass
         rc = subprocess.call(self.check_script_file)
-        return rc
+
+        # return success code (0) or failure code (any other)
+        if rc == 0:
+            return True
+        else:
+            return False
         pass
 
     def _restart(self):

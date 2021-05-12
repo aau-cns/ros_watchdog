@@ -139,6 +139,9 @@ class Observers(object):
         self.cfg_file = cfg_file                    # type: str
         rospy.logdebug("Setting up %s" % (self.get_name()))
 
+        if verbose:
+            rospy.loginfo("%s == config file: %s" % (self.get_name(), self.cfg_file))
+
         # preliminary checks for cfg file
         assert (os.path.exists(cfg_file))
 
@@ -223,6 +226,12 @@ class Observers(object):
         # save statuses and changes
         self.statuses = new_statuses
         self.status_changes = new_changes
+
+        if self.do_verbose():
+            rospy.loginfo(
+                "%s == updated statuses (length: %d)"
+                % (self.get_name(), len(self.statuses))
+            )
 
         # return current statuses
         return self.statuses
