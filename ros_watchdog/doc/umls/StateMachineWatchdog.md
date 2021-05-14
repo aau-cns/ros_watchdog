@@ -125,7 +125,27 @@ state "UNDEFINED" as undef
 state "STARTING" as start
 
 state "STARTING" as start{
-  [*] --> node : update_call()
+  state "in" as in21
+  in21: check if driver exists
+  in21: check if driver is running
+  in21: restart node if driver failed once
+  in21: restart_node=False
+
+  state "out" as out22
+  out22 : set restart_node=True
+
+  state check21 <<choice>>
+  state check22 <<choice>>
+
+  [*] --> in21 : update_call()
+
+  in21 --> check21: has_driver() ?
+  check21 --> node: false
+  check21 --> check22: true\ndriver_running() ?
+
+  check22 --> restart: true
+  check22 --> out22
+  out22 --> [*]
 }
 state "NOMINAL" as nominal {
   [*] --> node: update_call()
@@ -137,6 +157,13 @@ state "ERROR" as error {
 state "node check" as node {
   state check51 <<choice>>
   [*] --> check51: node_running?
+}
+
+state "restart node" as restart {
+  state check63 <<choice>>
+
+  [*] --> check63: max_restart_attempts ?
+  check63: 
 }
 
 check51 --> nominal: true

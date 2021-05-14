@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ###### NodesObserver
 - System call takes a long time to execute, use `rosnode` module instead.
 
-**BRANCH**: `feat/actions`
+**[FEATURE 2]**: `feat/actions` (merged to `develop`)
 ### Added
 ##### watchdog_bringup
 - Scripts to restart realsense HUB (WIP).
@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Original Version by @rojung.
 
+[FEATURE 2]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/tree/7321c076fab4b18815eadf97390b51abe77d6ee7
 [FEATURE 1]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/tree/eef00de426041d7740b41923108a834ad830ad55
 [Unreleased]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/compare/develop...main
 [Original]: https://gitlab.aau.at/aau-cns/ros_pkgs/aaucns_ros_watchdog/-/tree/master
