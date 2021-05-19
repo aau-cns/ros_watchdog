@@ -7,14 +7,21 @@
     <arg name="start_service_o"     default="$(arg node_name)/start" />
     <arg name="autonomy_service_o"  default="$(arg node_name)/autonomy" />
 
+    <!-- config files -->
+    <param name="topics_cfg_file"   value="$(find watchdog_bringup)/config/topics.ini"/>
+    <param name="sensors_cfg_file"  value="$(find watchdog_bringup)/config/sensors.ini"/>
+    <param name="drivers_cfg_file"  value="$(find watchdog_bringup)/config/drivers.ini"/>
+    <param name="nodes_cfg_file"    value="$(find watchdog_bringup)/config/nodes.ini"/>
+
     <arg name="do_verbose"          default="True" />
     <arg name="use_startup_to"      default="False" />
 
     <node pkg="ros_watchdog" type="WatchdogNode.py" name="watchdog" output="screen">
-        <param name="topics_cfg_file"   value="$(find watchdog_bringup)/config/topics.ini"/>
-        <param name="sensors_cfg_file"  value="$(find watchdog_bringup)/config/sensors.ini"/>
-        <param name="drivers_cfg_file"  value="$(find watchdog_bringup)/config/drivers.ini"/>
-        <param name="nodes_cfg_file"    value="$(find watchdog_bringup)/config/nodes.ini"/>
+        <param name="topics_cfg_file"   value="$(arg topics_cfg_file)"/>
+        <param name="sensors_cfg_file"  value="$(arg sensors_cfg_file)"/>
+        <param name="drivers_cfg_file"  value="$(arg drivers_cfg_file)"/>
+        <param name="nodes_cfg_file"    value="$(arg nodes_cfg_file)"/>
+        
         <param name="topic_check_rate"  value="0.5"/>
         <param name="bVerbose"          value="$(arg do_verbose)"/>
         <param name="bUseStartupTO"     value="$(arg use_startup_to)"/>
