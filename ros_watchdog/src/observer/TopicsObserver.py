@@ -16,7 +16,11 @@ from enum import Enum, unique
 import typing as typ
 
 from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity
-
+from roslib.message import get_message_class
+from rospy.msg import AnyMsg
+import rospy
+import rosgraph
+from rostopic import ROSTopicHz
 
 # @unique
 # class TopicStatus(Enum):    # RosWatchdog.status
@@ -49,7 +53,7 @@ class TopicObserver(Observer):
             watchdog_action=0,                      # type: typ.Union[int, str]
             driver_name='',                         # type: str
             node_name='',                           # type: str
-            window_size=10,                         # type: int
+            window_size=100,                        # type: int
             rate_margin=0.1,                        # type: typ.Union[float, str]
             verbose=True,                           # type: bool
             ):
@@ -83,8 +87,11 @@ class TopicObserver(Observer):
         self.msg_tn = -1
         self.time_operational = -1
 
+        self._master = rosgraph.Master(rospy.get_name())
+
         self.topic = rosgraph.names.script_resolve_name('rostopic', self.name)
         self.sub = None
+        self.rt = None
         pass
 
     def stop_observation(self):
@@ -93,6 +100,7 @@ class TopicObserver(Observer):
         if self.sub:
             self.sub.unregister()
             self.sub = None
+            self.rt = None
             pass
         pass
 
@@ -103,7 +111,9 @@ class TopicObserver(Observer):
         self.msg_tn = -1
         self.time_operational = rospy.get_rostime().to_sec() + self.timeout
         self.status = ObserverStatus.STARTING
-        self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz)
+        self.rt = ROSTopicHz(self.window_size)
+        self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.rt.callback_hz)
+        #self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz, queue_size=10)
         pass
 
     def update(self):
@@ -113,27 +123,28 @@ class TopicObserver(Observer):
         t_curr = rospy.get_rostime().to_sec()
 
         # check if this topic is in specified dead time.
-        if t_curr < self.time_operational:
-            if self.do_verbose():
-                print("*  [" + self.name + "] still within initial timeout...")
-                pass
-            self.status = ObserverStatus.STARTING
-            return
+        # if t_curr < self.time_operational:
+        #     if self.do_verbose():
+        #         print("*  [" + self.name + "] still within initial timeout...")
+        #         pass
+        #     self.status = ObserverStatus.STARTING
+        #     return
 
-        if self.msg_t0 < 0:
-            if self.do_verbose():
-                print("*  [" + self.name + "] no message received yet...")
-            self.status = ObserverStatus.ERROR
-            return
+        # if self.msg_t0 < 0:
+        #     if self.do_verbose():
+        #         print("*  [" + self.name + "] no message received yet...")
+        #     self.status = ObserverStatus.ERROR
+        #     return
 
-        [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
+        # [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
+        [rate, min_delta, max_delta, std_dev, n] = self.rt.get_hz()
 
         # set status depending on rate
         if self.rate - rate > self.__rate_margin:
             # error condition; rate not fullfilled
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
-                print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.ERROR
             return
@@ -143,7 +154,7 @@ class TopicObserver(Observer):
             # or rate is higher than expected
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " slightly differs: " + str(rate))
-                print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.NONCRITICAL
             return
@@ -152,7 +163,7 @@ class TopicObserver(Observer):
             # nominal condition
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached: " + str(rate))
-                print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.NOMINAL
             return
@@ -172,8 +183,17 @@ class TopicObserver(Observer):
         """
         ros sub callback
         """
-        curr = rospy.get_rostime().to_sec()
-
+        if 'Header header' in data._connection_header['message_definition']:
+            # if self.do_verbose():
+            #     print("*  [" + self.name + "] using header timestamp for calc")
+            topic_types = self._master.getTopicTypes()
+            msg_name = [ty for tp, ty in topic_types if tp == self.topic][0]
+            msg_class = get_message_class(msg_name)
+            msg = msg_class().deserialize(data._buff)
+            curr = msg.header.stamp.to_sec()
+        else:
+            curr = rospy.get_rostime().to_sec()
+        
         if self.msg_tn < 0 or self.msg_t0 < 0:
             self.msg_t0 = curr
             self.msg_tn = curr

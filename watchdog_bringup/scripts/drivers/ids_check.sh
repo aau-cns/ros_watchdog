@@ -12,10 +12,10 @@
 # this bash script adheres to linux exit codes
 # see https://tldp.org/LDP/abs/html/exitcodes.html for further information
 
-echo "[BASH - IDS] checking sensor - IDS Camera"
+#echo "[BASH - IDS] checking sensor - IDS Camera"
 
 IDS_STATUS="$(systemctl status ueyeusbdrc)"
-echo "[BASH - IDS] status: ${IDS_STATUS}"
+#echo "[BASH - IDS] status: ${IDS_STATUS}"
 
 case $IDS_STATUS in
   "")
@@ -35,7 +35,7 @@ case $IDS_STATUS in
       HAS_FAILED=$(echo "$IDS_STATUS" | grep "0xffffffff")
       if [[ -z "${HAS_FAILED}" ]]; then
         # when empty driver is ok
-        echo "[BASH - IDS] camera driver is OK"
+        #echo "[BASH - IDS] camera driver is OK"
         exit 0
       else
         # driver loading has failed

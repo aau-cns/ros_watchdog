@@ -8,10 +8,10 @@
     <arg name="autonomy_service_o"  default="$(arg node_name)/autonomy" />
 
     <!-- config files -->
-    <param name="topics_cfg_file"   value="$(find watchdog_bringup)/config/topics.ini"/>
-    <param name="sensors_cfg_file"  value="$(find watchdog_bringup)/config/sensors.ini"/>
-    <param name="drivers_cfg_file"  value="$(find watchdog_bringup)/config/drivers.ini"/>
-    <param name="nodes_cfg_file"    value="$(find watchdog_bringup)/config/nodes.ini"/>
+    <arg name="topics_cfg_file"   default="$(find watchdog_bringup)/config/topics.ini"/>
+    <arg name="sensors_cfg_file"  default="$(find watchdog_bringup)/config/sensors.ini"/>
+    <arg name="drivers_cfg_file"  default="$(find watchdog_bringup)/config/drivers.ini"/>
+    <arg name="nodes_cfg_file"    default="$(find watchdog_bringup)/config/nodes.ini"/>
 
     <arg name="do_verbose"          default="True" />
     <arg name="use_startup_to"      default="False" />
