@@ -67,10 +67,9 @@ class TopicObserver(Observer):
         self.action = int(watchdog_action)
         self.driver_name = driver_name
         self.node_name = node_name
-        self.timeout = float(timeout)
         self.window_size = int(window_size)
         if self.timeout == 0:
-            self.timeout = self.window_size/self.rate if self.rate > 0.0 else 0.0
+            self.timeout = 2.0 * self.window_size/self.rate if self.rate > 0.0 else 0.0
             pass
 
         # set rate boundaries
@@ -113,7 +112,7 @@ class TopicObserver(Observer):
         self.status = ObserverStatus.STARTING
         self.rt = ROSTopicHz(self.window_size)
         self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.rt.callback_hz)
-        #self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz, queue_size=10)
+        # self.sub = rospy.Subscriber(self.topic, rospy.AnyMsg, self.callback_hz, queue_size=10)
         pass
 
     def update(self):
@@ -123,12 +122,12 @@ class TopicObserver(Observer):
         t_curr = rospy.get_rostime().to_sec()
 
         # check if this topic is in specified dead time.
-        # if t_curr < self.time_operational:
-        #     if self.do_verbose():
-        #         print("*  [" + self.name + "] still within initial timeout...")
-        #         pass
-        #     self.status = ObserverStatus.STARTING
-        #     return
+        if t_curr < self.time_operational:
+            if self.do_verbose():
+                print("*  [" + self.name + "] still within initial timeout...")
+                pass
+            self.status = ObserverStatus.STARTING
+            return
 
         # if self.msg_t0 < 0:
         #     if self.do_verbose():
@@ -145,6 +144,7 @@ class TopicObserver(Observer):
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " not reached: " + str(rate))
                 # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                print("*  -  stat:" + str([rate, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.ERROR
             return
@@ -155,6 +155,7 @@ class TopicObserver(Observer):
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " slightly differs: " + str(rate))
                 # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                print("*  -  stat:" + str([rate, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.NONCRITICAL
             return
@@ -164,6 +165,7 @@ class TopicObserver(Observer):
             if self.do_verbose():
                 print("*  [" + self.name + "] expected rate " + str(self.rate) + " reached: " + str(rate))
                 # print("*  -  stat:" + str([rate, mean, std_dev, max_delta, min_delta]))
+                print("*  -  stat:" + str([rate, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.NOMINAL
             return
@@ -237,6 +239,7 @@ class TopicsObserver(Observers):
 
     def __init__(self,
                  cfg_file,                          # type: str
+                 window_time,                       # type: float
                  verbose=True,                      # type: bool
                  use_startup_to=True,               # type: bool
                  ):
@@ -260,15 +263,19 @@ class TopicsObserver(Observers):
             # check startup timeout
             timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
 
+            rate = float(section.get('rate', '1.0'))
+            window_size = int(section.get('window_size', str(window_time/rate)))
+
             # read configuration:
             self.observers[key] = TopicObserver(
                 topic_name=key,
                 entity_id=str(section.get('entity_id', 'undefined')),
-                rate=float(section.get('rate', '1.0')),
+                rate=rate,
                 rate_margin=float(section.get('margin', '0.1')),
                 severity=int(section.get('severity', '0')),
                 watchdog_action=int(section.get('watchdog_action', '0')),
                 timeout=timeout,
+                window_size=window_size,
                 driver_name=str(section.get('driver_name', '')),
                 node_name=str(section.get('node_name', '')),
                 verbose=verbose,
