@@ -239,7 +239,7 @@ class TopicsObserver(Observers):
 
     def __init__(self,
                  cfg_file,                          # type: str
-                 window_time,                       # type: float
+                 window_time=2.0,                   # type: float
                  verbose=True,                      # type: bool
                  use_startup_to=True,               # type: bool
                  ):
