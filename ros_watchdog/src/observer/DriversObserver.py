@@ -202,7 +202,7 @@ class DriversObserver(Observers):
                 dirname=self.dirname,
                 check_script=str(section.get('check_script', '')),
                 restart_script=str(section.get('restart_script', '')),
-                restart_attempts=int(section.get('restart_attempts', '0')),
+                restart_attempts=int(section.get('restart_attempts', '1')),
                 verbose=verbose
             )
 
