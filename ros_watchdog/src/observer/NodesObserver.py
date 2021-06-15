@@ -31,8 +31,8 @@ def kill_ros_node(node_name, verbose):
             rospy.loginfo("-- rosnode kill " + node_name)
             pass
 
-        # os.system("rosnode kill " + node_name)
-        rosnode.kill_nodes([node_name])
+        os.system("rosnode kill " + node_name)
+        # rosnode.kill_nodes([node_name])
         return True
     else:
         rospy.logwarn("-- node [" + node_name + "] is not running!")

@@ -146,7 +146,19 @@ class TopicObserver(Observer):
         #     return
 
         # [rate, mean, std_dev, max_delta, min_delta] = self.get_hz()
-        [rate, min_delta, max_delta, std_dev, n] = self.rt.get_hz()
+        # try to read topic frequency
+        try:
+            [rate, min_delta, max_delta, std_dev, n] = self.rt.get_hz()
+        except TypeError:
+            if self.do_verbose():
+                print("*  [" + self.name + "] cannot read topic " + str(self.topic))
+                pass
+            rate = 0.0
+            min_delta = 0.0
+            max_delta = 0.0
+            std_dev = 0.0
+            n = 0.0
+            pass
 
         # set status depending on rate
         if self.rate - rate > self.__rate_margin:
@@ -161,8 +173,15 @@ class TopicObserver(Observer):
             # check if we perform autorestart of nodes
             if not self.successfully_started:
                 if self.restart_attempts < self.max_restarts:
+                    # restart node (in case driver is bad)
                     kill_ros_node(self.node_name, self.do_verbose())
                     self.restart_attempts += 1
+                    
+                    # restart observation
+                    self.start_observation()
+
+                    # hack to wait longer after performing restart
+                    self.time_operational = rospy.get_rostime().to_sec() + 2.0*self.timeout
                     pass
                 pass
             return
@@ -283,7 +302,7 @@ class TopicsObserver(Observers):
             timeout = float(section.get('timeout', '0.0')) if use_startup_to else 0.0
 
             rate = float(section.get('rate', '1.0'))
-            window_size = int(section.get('window_size', str(window_time/rate)))
+            window_size = int(round(float(section.get('window_size', str(rate/window_time)))))
 
             # read configuration:
             self.observers[key] = TopicObserver(
