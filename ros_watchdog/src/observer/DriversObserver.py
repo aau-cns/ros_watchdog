@@ -107,6 +107,8 @@ class DriverObserver(Observer):
             pass
         else:
             # if the driver is not running check what the current status is
+            # TODO(scm) this is always 1/4 (1) here but act is  not executed
+            rospy.loginfo("*  -  restarting %d/%d (%d)" % (self.__cnt_restarts, self.restart_attempts, (self.__cnt_restarts < self.restart_attempts)))
             if self.status == ObserverStatus.STARTING and self.__cnt_restarts < self.restart_attempts:
                 # perform drivers if we are in starting phase and have not reached max_restart attempts
                 if self.do_verbose():
@@ -150,7 +152,7 @@ class DriverObserver(Observer):
         self.__cnt_restarts += 1
 
         if self.do_verbose():
-            rospy.logwarn("**** [%s] restarting sensor - attempt number %d" % (self.get_name(), self.__cnt_restarts))
+            rospy.logwarn("**** [%s] restarting sensor - attempt number %d/%d" % (self.get_name(), self.__cnt_restarts, self.restart_attempts))
             rospy.loginfo("**** -- executing %s" % str(self.restart_script_file))
             pass
 
