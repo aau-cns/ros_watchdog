@@ -15,7 +15,8 @@ import math
 from enum import Enum, unique
 import typing as typ
 
-from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity
+from observer.Observer import Observer, Observers, ObserverStatus, ObserverSeverity, ObserverAction
+from observer.NodesObserver import kill_ros_node
 from roslib.message import get_message_class
 from rospy.msg import AnyMsg
 import rospy
@@ -51,6 +52,7 @@ class TopicObserver(Observer):
             rate=1,                                 # type: typ.Union[float, str]
             severity=0,                             # type: typ.Union[int, str]
             watchdog_action=0,                      # type: typ.Union[int, str]
+            attempts=0,                             # type: typ.Union[int, str]
             driver_name='',                         # type: str
             node_name='',                           # type: str
             window_size=100,                        # type: int
@@ -64,7 +66,7 @@ class TopicObserver(Observer):
         # set topic values
         self.rate = float(rate)
         self.severity = int(severity)
-        self.action = int(watchdog_action)
+        self.action = ObserverAction(int(watchdog_action))
         self.driver_name = driver_name
         self.node_name = node_name
         self.window_size = int(window_size)
@@ -91,6 +93,11 @@ class TopicObserver(Observer):
         self.topic = rosgraph.names.script_resolve_name('rostopic', self.name)
         self.sub = None
         self.rt = None
+
+        # for auto restarting of node in starting phase
+        self.successfully_started = False
+        self.restart_attempts = 0
+        self.max_restarts = int(attempts)
         pass
 
     def stop_observation(self):
@@ -101,6 +108,8 @@ class TopicObserver(Observer):
             self.sub = None
             self.rt = None
             pass
+        self.successfully_started = False
+        self.restart_attempts = 0
         pass
 
     # important for high level logic to define when observation should start!
@@ -127,6 +136,7 @@ class TopicObserver(Observer):
                 print("*  [" + self.name + "] still within initial timeout...")
                 pass
             self.status = ObserverStatus.STARTING
+            self.successfully_started = False
             return
 
         # if self.msg_t0 < 0:
@@ -147,6 +157,14 @@ class TopicObserver(Observer):
                 print("*  -  stat:" + str([rate, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.ERROR
+
+            # check if we perform autorestart of nodes
+            if not self.successfully_started:
+                if self.restart_attempts < self.max_restarts:
+                    kill_ros_node(self.node_name, self.do_verbose())
+                    self.restart_attempts += 1
+                    pass
+                pass
             return
 
         if self.rate/100 < abs(rate - self.rate) < self.__rate_margin or rate - self.rate > self.__rate_margin:
@@ -168,6 +186,7 @@ class TopicObserver(Observer):
                 print("*  -  stat:" + str([rate, std_dev, max_delta, min_delta]))
                 pass
             self.status = ObserverStatus.NOMINAL
+            self.successfully_started = True
             return
 
         pass  # def update()
@@ -274,6 +293,7 @@ class TopicsObserver(Observers):
                 rate_margin=float(section.get('margin', '0.1')),
                 severity=int(section.get('severity', '0')),
                 watchdog_action=int(section.get('watchdog_action', '0')),
+                attempts=int(section.get('attempts', '0')),
                 timeout=timeout,
                 window_size=window_size,
                 driver_name=str(section.get('driver_name', '')),
