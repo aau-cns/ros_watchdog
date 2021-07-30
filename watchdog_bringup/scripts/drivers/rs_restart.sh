@@ -19,4 +19,6 @@
 # command by chris
 ssh core@10.42.0.102 'sudo uhubctl --action cycle --location 2'
 
+sleep 5
+
 exit 0

@@ -12,12 +12,15 @@
 # this bash script adheres to linux exit codes
 # see https://tldp.org/LDP/abs/html/exitcodes.html for further information
 
-#echo "[BASH - RS] checking sensor - Realsense"
+# echo "[BASH - RS] checking sensor - Realsense"
+
+RS_CHECK="$(rs-enumerate-devices)"
+# echo "[BASH - RS] status: ${RS_CHECK}"
 
 # check if device is found in lsusb
 RS_ID="8087:0b37"
 RS_STATUS="$(ssh core@10.42.0.102 'lsusb' | grep ${RS_ID})"
-#echo "[BASH - RS] status: ${RS_STATUS}"
+# echo "[BASH - RS] status: ${RS_STATUS}"
 
 case $RS_STATUS in
   "")
