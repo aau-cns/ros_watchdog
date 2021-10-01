@@ -91,11 +91,10 @@ class DriverObserver(Observer):
             pass
 
         # check if observation is running
-        if self.status == ObserverStatus.UNOBSERVED:
+        if self.status == ObserverStatus.UNOBSERVED or self.status == ObserverStatus.NOMINAL:
             return self.status
 
         # check if driver is running
-        # TODO(scm): perform systemctl checks here
         is_running = self._check_driver_systemctl()
 
         if is_running:
@@ -134,7 +133,7 @@ class DriverObserver(Observer):
     ####################
 
     def _check_driver_systemctl(self):
-        # TODO(scm): perform systemctl checks here
+        # perform systemctl checks here
         if self.do_verbose():
             rospy.loginfo("* [%s] checking status - file %s" % (self.get_name(), str(self.check_script_file)))
             pass
