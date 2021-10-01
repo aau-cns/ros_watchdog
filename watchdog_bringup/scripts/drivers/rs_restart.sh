@@ -17,8 +17,9 @@
 # restart realsense hub
 # ssh core@10.42.0.102 'sudo uhubctl -a off --delay 2 -e -R -l2 -p1'
 # command by chris
-ssh core@10.42.0.102 'sudo uhubctl --action cycle --location 2'
-
+#ssh core@10.42.0.102 'sudo uhubctl --action cycle --location 2'
+ssh core@10.42.0.102 'sudo uhubctl --action cycle --location 2 -R --delay 5'
 sleep 5
+ssh core@10.42.0.102 'rs-enumerate-devices'
 
 exit 0
