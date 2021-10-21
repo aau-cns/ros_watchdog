@@ -274,7 +274,7 @@ class Watchdog(object):
 
                     if new_max > global_status:
                         global_status = new_max
-                        max_id = new_max_id
+                        max_id = self.get_asset_id(key, new_max_id)
                         pass
                     # global_status = max(global_status, new_max)
                     info_string += "Status %s: %d\n" % (str(key), new_max.value)

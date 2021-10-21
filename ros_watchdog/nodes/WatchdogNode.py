@@ -29,7 +29,7 @@ class WatchdogNode(object):
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
         self.drivers_cfg_file = rospy.get_param("~drivers_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
-        self.topic_check_rate = rospy.get_param("/autonomy/watchdog_rate", 1.0)
+        self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
         self.bVerbose = rospy.get_param("~bVerbose", True)
         self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
