@@ -247,6 +247,7 @@ class Watchdog(object):
         global_status = ObserverStatus.UNOBSERVED
         info_string = ""
         max_id = ""
+        max_obs = 0
 
         # check for current state of WD
         if self.__state == Watchdog.States.STOPPED:
@@ -275,6 +276,7 @@ class Watchdog(object):
                     if new_max > global_status:
                         global_status = new_max
                         max_id = self.get_asset_id(key, new_max_id)
+                        max_obs = key.value
                         pass
                     # global_status = max(global_status, new_max)
                     info_string += "Status %s: %d\n" % (str(key), new_max.value)
@@ -296,7 +298,7 @@ class Watchdog(object):
 
         if with_info:
             if with_id:
-                return global_status, info_string, max_id
+                return global_status, info_string, max_id, max_obs
             else:
                 return global_status, info_string
         else:

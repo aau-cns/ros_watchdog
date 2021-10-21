@@ -253,7 +253,7 @@ class WatchdogNode(object):
         msg.type = asset_type
         msg.name = asset_name
         if id_as_max:
-            msg.status, msg.info, msg.entity = self.watchdog.get_status_global(as_int=True, with_id=id_as_max)
+            msg.status, msg.info, msg.entity, msg.type = self.watchdog.get_status_global(as_int=True, with_id=id_as_max)
         else:
             msg.status, msg.info = self.watchdog.get_status_global(as_int=True)
             pass
