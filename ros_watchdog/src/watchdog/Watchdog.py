@@ -242,9 +242,11 @@ class Watchdog(object):
     def get_status_global(self,
                           as_int=True,
                           with_info=True,
+                          with_id=False,
                           ):
         global_status = ObserverStatus.UNOBSERVED
         info_string = ""
+        max_id = ""
 
         # check for current state of WD
         if self.__state == Watchdog.States.STOPPED:
@@ -257,9 +259,12 @@ class Watchdog(object):
         else:
             # check the max (=worst) status of each observation
             for key, obs in self.__observers.items():
-                vals = obs.get_statuses().values()
+                stats = obs.get_statuses()
+                vals = stats.values()
                 if len(vals) > 0:
-                    new_max = max(vals)
+                    # new_max = max(vals)
+                    new_max_id = max(stats, key=stats.get)
+                    new_max = stats[new_max_id]
 
                     # debug
                     if self.__bVerbose:
@@ -267,7 +272,11 @@ class Watchdog(object):
                                       % (str(key), new_max.value, str(new_max)))
                         pass
 
-                    global_status = max(global_status, new_max)
+                    if new_max > global_status:
+                        global_status = new_max
+                        max_id = new_max_id
+                        pass
+                    # global_status = max(global_status, new_max)
                     info_string += "Status %s: %d\n" % (str(key), new_max.value)
                     pass
                 else:
@@ -286,7 +295,10 @@ class Watchdog(object):
             pass
 
         if with_info:
-            return global_status, info_string
+            if with_id:
+                return global_status, info_string, max_id
+            else:
+                return global_status, info_string
         else:
             return global_status
         pass

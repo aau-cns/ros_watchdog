@@ -131,7 +131,7 @@ class WatchdogNode(object):
         res.header.stamp = rospy.get_rostime().now()
         res.header.frame_id = "ros_watchdog"
 
-        res.status = self.__get_status_msg()
+        res.status = self.__get_status_msg(id_as_max=True)
         res.successful = True if res.status.status == 1 or res.status.status == 4 else False
 
         return res
@@ -246,12 +246,17 @@ class WatchdogNode(object):
                          asset_id="",
                          asset_name="/watchdog/global",
                          asset_type=StatusMsg.GLOBAL,
+                         id_as_max=False,
                          ):
         msg = StatusMsg()
         msg.entity = asset_id
         msg.type = asset_type
         msg.name = asset_name
-        msg.status, msg.info = self.watchdog.get_status_global(as_int=True)
+        if id_as_max:
+            msg.status, msg.info, msg.entity = self.watchdog.get_status_global(as_int=True, with_id=id_as_max)
+        else:
+            msg.status, msg.info = self.watchdog.get_status_global(as_int=True)
+            pass
         return msg
         pass
 
