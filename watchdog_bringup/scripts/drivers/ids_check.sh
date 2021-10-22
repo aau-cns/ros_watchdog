@@ -17,6 +17,13 @@
 IDS_STATUS="$(systemctl status ueyeusbdrc)"
 #echo "[BASH - IDS] status: ${IDS_STATUS}"
 
+# give it a couple more secs if driver has just restarted
+IDS_RESTART_CHECK=$(echo "$IDS_STATUS" | grep "Model")
+if [[ -z "${IDS_RESTART_CHECK}" ]]; then
+  sleep 2
+  IDS_STATUS="$(systemctl status ueyeusbdrc)"
+fi
+
 case $IDS_STATUS in
   "")
     # service cannot be found
