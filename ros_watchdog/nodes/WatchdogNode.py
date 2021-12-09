@@ -146,12 +146,12 @@ class WatchdogNode(object):
         else:
             # debug
             if self.bVerbose:
-                if data.action.action == ActionMsg.RESTART_NODE:
+                if data.action.action == ActionMsg.FIX_NODE:
                     rospy.loginfo("[ACTION] restarting node of %s" % data.action.entity.entity)
-                elif data.action.action == ActionMsg.RESTART_DRIVER:
+                elif data.action.action == ActionMsg.FIX_DRIVER:
                     rospy.loginfo("[ACTION] restarting driver of %s" % data.action.entity.entity)
-                elif data.action.action == ActionMsg.KILL_NODE:
-                    rospy.loginfo("[ACTION] killing node of %s" % data.action.entity.entity)
+                # elif data.action.action == ActionMsg.KILL_NODE:
+                #     rospy.loginfo("[ACTION] killing node of %s" % data.action.entity.entity)
                 else:
                     rospy.loginfo("[ACTION] unknown action %d -- doing nothing for %s"
                                   % (data.action.action, data.action.entity.entity))
