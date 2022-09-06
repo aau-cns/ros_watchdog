@@ -1,36 +1,43 @@
-<!-- ROS launch file -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright (C) 2022 Martin Scheiber and Christoph Boehm, and others,
+  Control of Networked Systems, University of Klagenfurt, Austria.
+
+  All rights reserved.
+
+  This software is licensed under the terms of the BSD-2-Clause-License with
+  no commercial use allowed, the full terms of which are made available
+  in the LICENSE file. No license in patents is granted.
+
+  You can contact the author at <martin.scheiber@ieee.org> and
+  <alessandro.fornasier@ieee.org>.
+-->
 <launch>
     <arg name="node_name"           default="watchdog" />
 
     <arg name="status_o"            default="$(arg node_name)/status" />
     <arg name="status_service_o"    default="$(arg node_name)/status" />
     <arg name="start_service_o"     default="$(arg node_name)/start" />
-    <arg name="autonomy_service_o"  default="$(arg node_name)/autonomy" />
 
-    <arg name="topic_check_dt"      default="0.5" />
+    <arg name="entity_check_rate"   default="2.0" />
 
     <!-- config files -->
-    <arg name="topics_cfg_file"   default="$(find watchdog_bringup)/config/topics.ini"/>
-    <arg name="sensors_cfg_file"  default="$(find watchdog_bringup)/config/sensors.ini"/>
-    <arg name="drivers_cfg_file"  default="$(find watchdog_bringup)/config/drivers.ini"/>
-    <arg name="nodes_cfg_file"    default="$(find watchdog_bringup)/config/nodes.ini"/>
+    <arg name="topics_cfg_file"     default="$(find watchdog_bringup)/config/topics.ini"/>
+    <arg name="drivers_cfg_file"    default="$(find watchdog_bringup)/config/drivers.ini"/>
+    <arg name="nodes_cfg_file"      default="$(find watchdog_bringup)/config/nodes.ini"/>
 
-    <arg name="do_verbose"          default="True" />
-    <arg name="use_startup_to"      default="False" />
+    <arg name="do_verbose"          default="False" />
 
     <node pkg="ros_watchdog" type="WatchdogNode.py" name="watchdog" output="screen">
         <param name="topics_cfg_file"   value="$(arg topics_cfg_file)"/>
-        <param name="sensors_cfg_file"  value="$(arg sensors_cfg_file)"/>
         <param name="drivers_cfg_file"  value="$(arg drivers_cfg_file)"/>
         <param name="nodes_cfg_file"    value="$(arg nodes_cfg_file)"/>
 
-        <param name="topic_check_rate"  value="$(arg topic_check_dt)"/>
+        <param name="entity_check_rate" value="$(arg entity_check_rate)"/>
         <param name="bVerbose"          value="$(arg do_verbose)"/>
-        <param name="bUseStartupTO"     value="$(arg use_startup_to)"/>
 
         <remap from="/status"           to="$(arg status_o)"/>
         <remap from="/status_service"   to="$(arg status_service_o)"/>
         <remap from="/start_service"    to="$(arg start_service_o)"/>
-        <remap from="/autonomy_action"  to="$(arg autonomy_service_o)"/>
     </node>
 </launch>

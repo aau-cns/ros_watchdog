@@ -29,7 +29,7 @@ class WatchdogNode(object):
         self.sensors_cfg_file = rospy.get_param("~sensors_cfg_file", "sensors.ini")
         self.drivers_cfg_file = rospy.get_param("~drivers_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
-        self.topic_check_rate = rospy.get_param("~topic_check_rate", 1.0)
+        self.entity_check_rate = rospy.get_param("~entity_check_rate", 1.0)
         self.bVerbose = rospy.get_param("~bVerbose", True)
         self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
@@ -56,8 +56,8 @@ class WatchdogNode(object):
         pass  # def __init__
 
     def run(self):
-        rospy.logwarn("Setting watchdog rate to %f" % (self.topic_check_rate))
-        rate = rospy.Rate(self.topic_check_rate)
+        rospy.logwarn("Setting watchdog rate to %3.2f Hz" % self.entity_check_rate)
+        rate = rospy.Rate(self.entity_check_rate)
         cnt = 0
 
         # main thread
