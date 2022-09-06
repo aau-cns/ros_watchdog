@@ -125,26 +125,17 @@ None at this point in time, please submit an issue request using the git interfa
 ## Package Layout
 
 ```[console]
-/path/to/mission_sequencer$ tree -L 3 --noreport --charset unicode
+/path/to/ros_watchdog$ tree -L 3 --noreport --charset unicode
 .
 |-- LICENSE
 |-- README.md
 |-- ros_watchdog
 |   |-- CMakeLists.txt
-|   |-- config
-|   |   `-- default_config.yaml
-|   |-- launch
-|   |   `-- default.launch
 |   |-- LICENCE
 |   |-- nodes
 |   |   `-- WatchdogNode.py
 |   |-- package.xml
 |   |-- README.md
-|   |-- scripts
-|   |   |-- config_parser_example.py
-|   |   |-- __init__.py
-|   |   |-- Observer_old.py
-|   |   `-- RosWatchdog.py
 |   |-- setup.py
 |   `-- src
 |       |-- observer
