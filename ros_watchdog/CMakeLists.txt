@@ -5,12 +5,6 @@ find_package(catkin REQUIRED COMPONENTS message_generation std_msgs watchdog_msg
 
 catkin_python_setup()
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  watchdog_msgs
-)
-
 catkin_package(CATKIN_DEPENDS watchdog_msgs std_msgs )
 
 include_directories(
@@ -19,7 +13,6 @@ include_directories(
 
 # do not wildcard install files since the root folder of the package will contain a debian folder for releasing
 catkin_install_python(PROGRAMS
-  scripts/RosWatchdog.py
   nodes/WatchdogNode.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

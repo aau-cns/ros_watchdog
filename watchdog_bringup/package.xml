@@ -11,4 +11,5 @@
   <author email="martin.scheiber@aau.at">Roland Jung</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>ros_watchdog</depend>
 </package>

@@ -40,10 +40,8 @@ This package is part of the [CNS FlightStack] and thus depends on the other pack
 - [CNS FlightStack: Autonomy Engine]
 
 Further the following libraries are required
-- Eigen
+- Python3
 - ROS noetic
-
-
 
 ### Build
 
@@ -55,7 +53,7 @@ catkin build watchdog_bringup # will automatically build ros_watchdog
 
 ## Usage
 
-The intended usage is together with the [CNS FlightStack: Autonomy Engine], which will interact with the mission sequencer. Use the provided launchfile to start the Mission Sequencer
+The intended usage is together with the [CNS FlightStack: Autonomy Engine], which will interact with the watchdog. Use the provided launchfile to start the watchdog
 
 ```bash
 roslaunch watchdog_bringup watchdog.launch 
@@ -75,11 +73,50 @@ roslaunch watchdog_bringup watchdog.launch
 | `nodes_cfg_file`      | config file for ROS1 nodes | `<watchdog_bringup>/config/nodes.ini` |
 | `do_verbose`          | enable verbose flag | `false` |
 
+### Usage without Autonomy Engine
+
+If required the watchdog can be used without the [CNS FlightStack: Autonomy Engine]. 
+The easiest way to do this is to start the watchdog with the provided service: 
+
+```bash
+rosservice call /watchdog/service/start "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+startup_time: 10.0" # any time >(2/<rate>) should be provided here 
+
+# feedback as Status.msg
+header: 
+  seq: 1
+  stamp: 
+    secs: <current_secs>
+    nsecs: <current_nsecs>
+  frame_id: "ros_watchdog"
+successful: True|False
+status: 
+  entity: ''
+  type: 0
+  status: 0|1|2|4|8
+  name: "/watchdog/global"
+  info: "
+    Status ObserverKeys.TOPIC: <no entries to watch>|0|1|2|4|8
+    Status ObserverKeys.NODE: <no entries to watch>|0|1|2|4|8
+    Status ObserverKeys.DRIVER: <no entries to watch>|0|1|2|4|8"
+entity_ids: [...]
+```
+
+The status can be one of the following and is defined in the [`Status.msg`](watchdog_msgs/msg/Status.msg)
+- `0`: undefined condition
+- `1`: nominal condition
+- `2`: startup phase (while the service call is active only, i.e., the duration `startup_time`)
+- `4`: inconvenient failure (but topic/node/driver is still active)
+- `8`: severe failure (no communication of topic/node/driver)
+
 ## Architecture
 
-Please refer to the [academic paper] for further insights of the Mission Sequencer.
-
-![mission_sequencer state diagram](./docs/resources/state_diagram_sequencer.png)
+Please refer to the [academic paper] for further insights of the ros_watchdog
 
 ## Known Issues
 
