@@ -56,8 +56,9 @@ class WatchdogNode(object):
         pass  # def __init__
 
     def run(self):
-        rospy.logwarn("Setting watchdog rate to %3.2f Hz" % self.entity_check_rate)
         rate = rospy.Rate(self.entity_check_rate)
+        rospy.logwarn("Setting watchdog rate to %3.2f Hz" % self.entity_check_rate)
+        rospy.logwarn("Setting watchdog sleep duration to %3.2f s" % rate.sleep_dur.to_sec())
         cnt = 0
 
         # main thread
@@ -124,7 +125,7 @@ class WatchdogNode(object):
 
         # wait required time for system checks
         rospy.loginfo("collecting startup data for %f seconds" % req.startup_time)
-        rospy.sleep(req.startup_time)
+        rospy.sleep(req.startup_time+2.0/self.entity_check_rate)
 
         # return response
         res = StartRes()
