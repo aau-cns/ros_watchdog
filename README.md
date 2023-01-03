@@ -1,11 +1,11 @@
 # CNS Flight Stack: ROS1 Watchdog
 
-[![License](https://img.shields.io/badge/License-AAUCNS-green.svg)](./LICENSE)
-
-Maintainer: [Martin Scheiber](mailto:martin.scheiber@aau.at)
+[![License](https://img.shields.io/badge/License-AAUCNS-336B81.svg)](./LICENSE) [![Paper](https://img.shields.io/badge/IEEEXplore-10.1109/LRA.2022.3196117-00629B.svg?logo=ieee)](https://doi.org/10.1109/LRA.2022.3196117) [![Release](https://img.shields.io/github/v/release/aau-cns/ros_watchdog?include_prereleases&logo=github)](https://github.com/aau-cns/ros_watchdog/releases)
 
 The ros_watchdog observers ROS1 topics and nodes, as well as system-defined drivers. Its settings are specified in INI-
 files, which can be specified as ROS1 parameters used during initalization.
+
+Maintainer: [Martin Scheiber](mailto:martin.scheiber@aau.at)
 
 ## Credit
 This code was written by the [Control of Networked System (CNS)](https://www.aau.at/en/smart-systems-technologies/control-of-networked-systems/), University of Klagenfurt, Klagenfurt, Austria.
@@ -15,11 +15,11 @@ This software is made available to the public to use (_source-available_), licen
 
 ### Usage for academic purposes
 If you use this software in an academic research setting, please cite the
-corresponding [academic paper] and consult the `LICENSE` file for a detailed explanation.
+corresponding paper and consult the `LICENSE` file for a detailed explanation.
 
 ```latex
 @article{cns_flightstack22,
-    title        = {Flight Stack for Reproducible and Customizable Autonomy Applications in Research and Industry},
+    title        = {CNS Flight Stack for Reproducible, Customizable, and Fully Autonomous Applications},
     author       = {Scheiber, Martin and Fornasier, Alessandro and Jung, Roland and Böhm, Christoph and Dhakate, Rohit and Stewart, Christian and Steinbrener, Jan and Weiss, Stephan and Brommer, Christian},
     journal      = {IEEE Robotics and Automation Letters},
     volume       = {7},
@@ -170,9 +170,14 @@ None at this point in time, please submit an issue request using the git interfa
         `-- Start.srv
 ```
 
+---
+
+Copyright (C) on changes 2021-2023 Roland Jung, Martin Scheiber, Alessandro Fornasier, and Christian Brommer, Control of Networked Systems, University of Klagenfurt, Austria.
+You can contact the authors at [roland.jung@aau.at](mailto:roland.jung@aau.at?subject=[CNS%20Flight%20Stack]%20ros_watchdog%20package), [martin.scheiber@aau.at](mailto:martin.scheiber@aau.at?subject=[CNS%20Flight%20Stack]%20ros_watchdog%20package), [alessandro.fornasier@aau.at](mailto:alessandro.fornasier@aau.at?subject=[CNS%20Flight%20Stack]%20ros_watchdog%20package), [christian.brommer@aau.at](mailto:christian.brommer@aau.at?subject=[CNS%20Flight%20Stack]%20ros_watchdog%20package).
+
 <!-- LINKS: -->
-[CNS FlightStack]: http://sst.aau.at/cns
-[CNS FlightStack: Autonomy Engine]: http://sst.aau.at/cns
+[CNS FlightStack]: https://github.com/aau-cns/flight_stack
+[CNS FlightStack: Autonomy Engine]: https://github.com/aau-cns/autonomy_engine
 [MavROS (CNS Version)]: https://github.com/aau-cns/mavros
 [PX4Bridge (CNS Version)]: https://github.com/aau-cns/PX4-Autopilot
 [academic paper]: https://ieeexplore.ieee.org/document/9849131
