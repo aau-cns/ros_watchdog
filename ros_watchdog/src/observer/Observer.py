@@ -259,6 +259,30 @@ class Observers(object):
                 % (self.cfg_file)
             )
         return config
+    
+    def _check_env_vars(self, in_config_dict):
+        new_config_dict = dict()
+        for key, section in in_config_dict.items():
+            # check if key contains environment value
+            new_key = str(key).format(**os.environ)
+            new_key = new_key.replace('$','')
+
+            # check if any entry in sections contains environment values
+            new_section = dict()
+            for entity, value in section.items():
+                new_value = str(value).format(**os.environ)
+                new_value = new_value.replace('$','')
+
+                new_section[entity] = new_value
+                pass
+
+            # store in new config
+            new_config_dict[new_key] = new_section
+            pass
+
+        # return config dict
+        return new_config_dict
+        pass # def _check_env_vars()
 
     ####################
     # I/O METHODS
@@ -345,7 +369,8 @@ class Observers(object):
             rospy.logwarn("%s == ERROR: no assets in %s" % (self.get_name(), self.cfg_file))
             return {}
         else:
-            return config_dict
+            # check for environment variables
+            return self._check_env_vars(config_dict)
         pass  # _get_config_dict()
 
     ####################
