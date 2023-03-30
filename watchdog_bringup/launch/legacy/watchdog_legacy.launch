@@ -22,9 +22,9 @@
     <arg name="entity_check_rate"   default="2.0" />
 
     <!-- config files -->
-    <arg name="topics_cfg_file"     default="$(find watchdog_bringup)/config/topics.yaml"/>
-    <arg name="drivers_cfg_file"    default="$(find watchdog_bringup)/config/drivers.yaml"/>
-    <arg name="nodes_cfg_file"      default="$(find watchdog_bringup)/config/nodes.yaml"/>
+    <arg name="topics_cfg_file"     default="$(find watchdog_bringup)/config/legacy/topics.ini"/>
+    <arg name="drivers_cfg_file"    default="$(find watchdog_bringup)/config/legacy/drivers.ini"/>
+    <arg name="nodes_cfg_file"      default="$(find watchdog_bringup)/config/legacy/nodes.ini"/>
 
     <arg name="do_verbose"          default="False" />
 

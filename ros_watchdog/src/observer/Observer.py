@@ -8,6 +8,7 @@ import time
 from enum import Enum, unique
 import typing as typ
 import configparser
+import yaml
 
 from observer.utils.Enums import OrderedEnum
 
@@ -241,9 +242,22 @@ class Observers(object):
     ####################
 
     def _read_config(self):
-        config = configparser.ConfigParser()
-        config.sections()
-        config.read(self.cfg_file)
+        if self.cfg_file.endswith('.ini'):
+            rospy.logwarn_once(
+                "LEGACY WARNING: .ini file support will be removed in future releases."
+            )
+            config = configparser.ConfigParser()
+            config.sections()
+            config.read(self.cfg_file)
+            pass
+        elif self.cfg_file.endswith('.yaml') or self.cfg_file.endswith('.yml'):
+            config = yaml.load(open(self.cfg_file), Loader=yaml.SafeLoader)
+            pass
+        else:
+            rospy.logerr(
+                "Unknown file type for config file %s"
+                % (self.cfg_file)
+            )
         return config
 
     ####################
@@ -313,15 +327,24 @@ class Observers(object):
         pass  # def get_observer_id(...)
 
     def _get_config_dict(self):
+        # check if config is none (required in .yaml case)
+        if self.config is None:
+            # no elements in config
+            rospy.logwarn("%s == ERROR: no assets in %s" % (self.get_name(), self.cfg_file))
+            return {}
+
+        # make sure config_dict is a dict
         config_dict = dict(self.config.items())
-        # check length of config items
-        if len(config_dict) < 2:
+
+        # remove 'DEFAULT' key from dict (in .ini case DEFAULT is always present)
+        config_dict.pop('DEFAULT', None)
+
+        # check length of config items (required in .ini case)
+        if len(config_dict) < 1:
             # no elements in config
             rospy.logwarn("%s == ERROR: no assets in %s" % (self.get_name(), self.cfg_file))
             return {}
         else:
-            # remove 'DEFAULT' key from dict
-            config_dict.pop('DEFAULT', None)
             return config_dict
         pass  # _get_config_dict()
 
