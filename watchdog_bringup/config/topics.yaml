@@ -1,0 +1,44 @@
+# Copyright (C) 2023 Martin Scheiber, Roland Jung,
+# and others, Control of Networked Systems, University of Klagenfurt, Austria.
+# 
+# All rights reserved.
+# 
+# This software is licensed under the terms of the BSD-2-Clause-License with
+# no commercial use allowed, the full terms of which are made available
+# in the LICENSE file. No license in patents is granted.
+# 
+# You can contact the authors at <martin.scheiber@aau.at>, <roland.jung@aau.at>
+
+# watchdog_action
+#    NONE = 0                    # -> OK
+#    WARNING = 1                 # -> OK
+#    ERROR = 2                   # -> ABORT
+#    RESTART_ROSNODE= 3          # -> HOLD
+#    RESTART_SENSOR = 4          # -> HOLD
+
+# severity
+#    LOW = 0                     # -> NON-CRIT
+#    MODERATE = 1                # -> INCONV FAIL
+#    HIGH = 2                    # -> SEVERE FAIL
+#    FATAL = 3                   # -> ABORT
+
+# [template_topic]
+# entity_id=/template
+# #  name of the entity
+# rate = 100
+# #  frequency [in HZ]
+# margin = 0.1
+# #  rate delta allowed for non-critical failure [relative to rate]
+# severity = 0
+# #  severity level of failure
+# node_name=/template_node
+# #  name of the rosnode associated with it
+# driver_name=template_driver
+# #  name of the driver associated with it
+
+/watchdog/status:
+  entity_id: wd
+  rate: 1.0
+  margin: 0.5
+  node_name: /watchdog
+  window_size: 10
