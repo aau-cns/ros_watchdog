@@ -15,8 +15,9 @@
 <launch>
     <arg name="node_name"           default="watchdog" />
 
+    <arg name="action_i"            default="$(arg node_name)/feeeeee" />
     <arg name="status_o"            default="$(arg node_name)/status" />
-    <arg name="status_service_o"    default="$(arg node_name)/status" />
+    <arg name="log_o"               default="$(arg node_name)/log" />
     <arg name="start_service_o"     default="$(arg node_name)/start" />
 
     <arg name="entity_check_rate"   default="2.0" />
@@ -36,8 +37,9 @@
         <param name="entity_check_rate" value="$(arg entity_check_rate)"/>
         <param name="bVerbose"          value="$(arg do_verbose)"/>
 
-        <remap from="/status"           to="$(arg status_o)"/>
-        <remap from="/status_service"   to="$(arg status_service_o)"/>
-        <remap from="/start_service"    to="$(arg start_service_o)"/>
+        <remap from="/$(arg node_name)/action"          to="$(arg action_i)"/>
+        <remap from="/$(arg node_name)/status"          to="$(arg status_o)"/>
+        <remap from="/$(arg node_name)/log"             to="$(arg log_o)"/>
+        <remap from="/$(arg node_name)/service/start"   to="$(arg start_service_o)"/>
     </node>
 </launch>
