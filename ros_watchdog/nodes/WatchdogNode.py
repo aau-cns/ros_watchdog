@@ -30,6 +30,7 @@ class WatchdogNode(object):
         self.drivers_cfg_file = rospy.get_param("~drivers_cfg_file", "sensors.ini")
         self.nodes_cfg_file = rospy.get_param("~nodes_cfg_file", "nodes.ini")
         self.entity_check_rate = rospy.get_param("~entity_check_rate", 1.0)
+        self.ros_ns_prefix = rospy.get_param("~ros_namespace_prefix", "")
         self.bVerbose = rospy.get_param("~bVerbose", True)
         self.bUseStartupTO = rospy.get_param("~bUseStartupTO", True)
 
@@ -49,7 +50,7 @@ class WatchdogNode(object):
         self.__cntLog = 0           # type: int
 
         # create watchdog
-        self.watchdog = Watchdog(verbose=self.bVerbose)
+        self.watchdog = Watchdog(verbose=self.bVerbose, ros_ns_prefix=self.ros_ns_prefix)
 
         # debug info
         rospy.loginfo("Started ROS Watchdog Node")

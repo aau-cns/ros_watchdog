@@ -187,6 +187,7 @@ class NodesObserver(Observers):
                  cfg_file,                          # type: str
                  verbose=True,                      # type: bool
                  use_startup_to=True,               # type: bool
+                 ros_ns_prefix="",                  # type: str
                  ):
         # call super constructor
         super(NodesObserver, self).__init__(
@@ -199,14 +200,17 @@ class NodesObserver(Observers):
         self.__cnt_id = 1   # always start with 1, 0 --> global
 
         for key, section in self.config_dict.items():
+            # setup node name
+            node_name = ros_ns_prefix + key
+
             # debugging
             if self.do_verbose():
-                rospy.loginfo("Adding node %s" % str(key))
+                rospy.loginfo("Adding node %s" % str(node_name))
                 pass
 
             # read configuration:
             self.observers[key] = NodeObserver(
-                node_name=key,
+                node_name=node_name,
                 entity_id=str(section.get('entity_id', 'undefined')),
                 max_restart_attempts=int(section.get('max_restart_attempts', '0')),
                 restart_timeout=float(section.get('restart_timeout', '0.0')),

@@ -280,6 +280,7 @@ class TopicsObserver(Observers):
                  window_time=2.0,                   # type: float
                  verbose=True,                      # type: bool
                  use_startup_to=True,               # type: bool
+                 ros_ns_prefix=""                   # type: str
                  ):
         # call super constructor
         super(TopicsObserver, self).__init__(
@@ -293,9 +294,12 @@ class TopicsObserver(Observers):
 
         # create dictionary of topic observers
         for key, section in self.config_dict.items():
+            # setup topic name
+            topic_name = ros_ns_prefix + key
+
             # debugging
             if self.do_verbose():
-                rospy.loginfo("Adding topic %s" % str(key))
+                rospy.loginfo("Adding topic %s" % str(topic_name))
                 pass
 
             # check startup timeout
@@ -305,8 +309,8 @@ class TopicsObserver(Observers):
             window_size = int(round(float(section.get('window_size', str(rate/window_time)))))
 
             # read configuration:
-            self.observers[key] = TopicObserver(
-                topic_name=key,
+            self.observers[topic_name] = TopicObserver(
+                topic_name=topic_name,
                 entity_id=str(section.get('entity_id', 'undefined')),
                 rate=rate,
                 rate_margin=float(section.get('margin', '0.1')),
@@ -316,7 +320,7 @@ class TopicsObserver(Observers):
                 timeout=timeout,
                 window_size=window_size,
                 driver_name=str(section.get('driver_name', '')),
-                node_name=str(section.get('node_name', '')),
+                node_name=ros_ns_prefix+str(section.get('node_name', '')),
                 verbose=verbose,
             )
 

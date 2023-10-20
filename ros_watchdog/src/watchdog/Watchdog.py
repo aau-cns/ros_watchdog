@@ -32,6 +32,7 @@ class Watchdog(object):
 
     def __init__(self,
                  verbose=False,
+                 ros_ns_prefix="",  # type: str
                  ):
 
         # setup state machine
@@ -43,6 +44,13 @@ class Watchdog(object):
 
         # setup flags
         self.__bVerbose = verbose                   # type: bool
+
+        # setup namespace prefix
+        if ros_ns_prefix != "" and not ros_ns_prefix.startswith('/'):
+            self.__ros_ns_prefix = "/" + ros_ns_prefix
+            pass
+        else:
+            self.__ros_ns_prefix = ros_ns_prefix
 
         pass  # def __init__(...)
 
@@ -68,13 +76,13 @@ class Watchdog(object):
             observer = None
             cfg_file = config_files_[ckey]
             if ckey == Watchdog.ObserverKeys.TOPIC:
-                observer = TopicsObserver(cfg_file, verbose=self.__bVerbose)
+                observer = TopicsObserver(cfg_file, verbose=self.__bVerbose, ros_ns_prefix=self.__ros_ns_prefix)
                 pass
             elif ckey == Watchdog.ObserverKeys.NODE:
-                observer = NodesObserver(cfg_file, verbose=self.__bVerbose)
+                observer = NodesObserver(cfg_file, verbose=self.__bVerbose, ros_ns_prefix=self.__ros_ns_prefix)
                 pass
             elif ckey == Watchdog.ObserverKeys.DRIVER:
-                observer = DriversObserver(cfg_file, verbose=self.__bVerbose)
+                observer = DriversObserver(cfg_file, verbose=self.__bVerbose,  ros_ns_prefix=self.__ros_ns_prefix)
                 pass
             else:
                 rospy.logerr("Key not implemented %s" % str(ckey))

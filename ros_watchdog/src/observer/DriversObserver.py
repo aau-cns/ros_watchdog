@@ -177,6 +177,7 @@ class DriversObserver(Observers):
     def __init__(self,
                  cfg_file,                          # type: str
                  verbose=True,                      # type: bool
+                 ros_ns_prefix="",                  # type: str
                  ):
         # call super constructor
         super(DriversObserver, self).__init__(

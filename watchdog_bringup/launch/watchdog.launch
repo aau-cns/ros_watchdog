@@ -13,29 +13,33 @@
   <alessandro.fornasier@ieee.org>.
 -->
 <launch>
-    <arg name="node_name"           default="watchdog" />
+    <arg name="node_name"             default="watchdog" />
 
-    <arg name="action_i"            default="$(arg node_name)/feeeeee" />
-    <arg name="status_o"            default="$(arg node_name)/status" />
-    <arg name="log_o"               default="$(arg node_name)/log" />
-    <arg name="start_service_o"     default="$(arg node_name)/start" />
+    <arg name="action_i"              default="$(arg node_name)/action" />
+    <arg name="status_o"              default="$(arg node_name)/status" />
+    <arg name="log_o"                 default="$(arg node_name)/log" />
+    <arg name="start_service_o"       default="$(arg node_name)/start" />
 
-    <arg name="entity_check_rate"   default="2.0" />
+    <arg name="entity_check_rate"     default="2.0" />
+
+    <arg name="ros_namespace_prefix"  default="" />
 
     <!-- config files -->
-    <arg name="topics_cfg_file"     default="$(find watchdog_bringup)/config/topics.yaml"/>
-    <arg name="drivers_cfg_file"    default="$(find watchdog_bringup)/config/drivers.yaml"/>
-    <arg name="nodes_cfg_file"      default="$(find watchdog_bringup)/config/nodes.yaml"/>
+    <arg name="topics_cfg_file"       default="$(find watchdog_bringup)/config/topics.yaml"/>
+    <arg name="drivers_cfg_file"      default="$(find watchdog_bringup)/config/drivers.yaml"/>
+    <arg name="nodes_cfg_file"        default="$(find watchdog_bringup)/config/nodes.yaml"/>
 
-    <arg name="do_verbose"          default="False" />
+    <arg name="do_verbose"            default="False" />
 
     <node pkg="ros_watchdog" type="WatchdogNode.py" name="watchdog" output="screen">
-        <param name="topics_cfg_file"   value="$(arg topics_cfg_file)"/>
-        <param name="drivers_cfg_file"  value="$(arg drivers_cfg_file)"/>
-        <param name="nodes_cfg_file"    value="$(arg nodes_cfg_file)"/>
+        <param name="topics_cfg_file"       value="$(arg topics_cfg_file)"/>
+        <param name="drivers_cfg_file"      value="$(arg drivers_cfg_file)"/>
+        <param name="nodes_cfg_file"        value="$(arg nodes_cfg_file)"/>
 
-        <param name="entity_check_rate" value="$(arg entity_check_rate)"/>
-        <param name="bVerbose"          value="$(arg do_verbose)"/>
+        <param name="entity_check_rate"     value="$(arg entity_check_rate)"/>
+        <param name="bVerbose"              value="$(arg do_verbose)"/>
+
+        <param name="ros_namespace_prefix"  value="$(arg ros_namespace_prefix)"/>
 
         <remap from="/$(arg node_name)/action"          to="$(arg action_i)"/>
         <remap from="/$(arg node_name)/status"          to="$(arg status_o)"/>
